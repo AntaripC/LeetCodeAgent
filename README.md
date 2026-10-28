@@ -2,6 +2,10 @@
 
 **LeetCode AI Copilot** is a production-grade Chrome/Chromium extension (Manifest V3) that integrates directly into the official [LeetCode](https://leetcode.com) website. It reads the active problem context, formulates optimal algorithms via **Google Gemini**, **OpenAI**, or **Custom/Ollama** models, and inserts verified solutions directly into LeetCode's built-in Monaco code editor.
 
+🌐 **Product Website & Live Playground**: Check out the official landing page and test the extension directly in your browser:
+- **Live Simulator & Web Portal**: [https://antaripc.github.io/LeetCodeAgent/](https://antaripc.github.io/LeetCodeAgent/) (or open `website/index.html` locally)
+- **1-Click Extension Download**: `website/downloads/leetcode-copilot-extension.zip`
+
 ---
 
 ## 📑 Table of Contents

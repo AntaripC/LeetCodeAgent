@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LeetCode AI Copilot — Multi-Model Browser Extension</title>
+  <meta name="description" content="Frontier AI pair programmer for LeetCode. Instant Monaco Editor code injection, Gemini 4 Argon & OpenAI GPT-6 reasoning, zero-secret local proxy security, and spending safeguards.">
+  <meta name="keywords" content="LeetCode, AI, Copilot, Chrome Extension, Gemini 4 Argon, GPT-6, Monaco Editor, Algorithms, Coding Interview">
+  <meta name="author" content="AntaripC">
+
+  <!-- OpenGraph Meta Tags -->
+  <meta property="og:title" content="LeetCode AI Copilot — Multi-Model Browser Extension">
+  <meta property="og:description" content="Frontier algorithmic reasoning right inside your LeetCode Monaco editor. Support for Gemini 4 Argon, GPT-6 Astra, and local backend proxy.">
+  <meta property="og:image" content="assets/hero-preview.jpg">
+  <meta property="og:type" content="website">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/icons/icon-48.png">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Ambient Glow Effects -->
+  <div class="ambient-glow" aria-hidden="true">
+    <div class="glow-orb-1"></div>
+    <div class="glow-orb-2"></div>
+    <div class="glow-orb-3"></div>
+  </div>
+  <div class="grid-overlay" aria-hidden="true"></div>
+
+  <!-- Sticky Navbar -->
+  <header class="navbar" id="mainHeader">
+    <nav class="nav-container" aria-label="Main Navigation">
+      <a href="#hero" class="nav-brand" id="navBrandLink">
+        <div class="brand-icon">
+          <img src="assets/icons/icon-32.png" alt="LeetCode AI Copilot Logo">
+        </div>
+        <span class="brand-text">LeetCode Copilot</span>
+        <span class="brand-badge">v1.2.0</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#simulator" class="nav-link" id="navLinkDemo">Interactive Demo</a></li>
+        <li><a href="#features" class="nav-link" id="navLinkFeatures">Features</a></li>
+        <li><a href="#models" class="nav-link" id="navLinkModels">Frontier Models</a></li>
+        <li><a href="#install" class="nav-link" id="navLinkInstall">Install Guide</a></li>
+        <li><a href="#faq" class="nav-link" id="navLinkFaq">FAQ</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a href="https://github.com/AntaripC/LeetCodeAgent" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" id="navGithubBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub
+        </a>
+        <a href="#install" class="btn btn-chrome btn-sm trigger-install-modal" id="navInstallBtn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v10M12 12l-4-4M12 12l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+          Add to Chrome
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+      <div class="container">
+        <div class="hero-pill">
+          <span class="dot"></span>
+          <span>Manifest V3 Ready · Google Gemini 4 Argon & OpenAI GPT-6 Frontier Support</span>
+        </div>
+
+        <h1 class="hero-title">
+          The Frontier AI Pair Programmer for <span class="gradient-text">LeetCode</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          Solve complex algorithmic challenges right inside the LeetCode Monaco editor.
+          Instant DOM context extraction, chain-of-thought frontier reasoning, and zero-secret local proxy security — seamlessly in your browser.
+        </p>
+
+        <div class="hero-cta">
+          <a href="downloads/leetcode-copilot-extension.zip" class="btn btn-primary btn-lg btn-glow trigger-install-modal" id="heroCtaDownloadBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Add to Chrome — Free Download
+          </a>
+          <a href="#simulator" class="btn btn-secondary btn-lg" id="heroCtaDemoBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Try Live Playground
+          </a>
+        </div>
+
+        <div class="hero-stats">
+          <div class="stat-item">
+            <span class="stat-number">100%</span>
+            <span class="stat-label">Manifest V3 Compliant</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">1-Click</span>
+            <span class="stat-label">Monaco Editor Injection</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">0 Keys</span>
+            <span class="stat-label">Exposed with Local Proxy</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">30+</span>
+            <span class="stat-label">Supported Languages</span>
+          </div>
+        </div>
+
+        <!-- Hero Showcase Mockup -->
+        <div class="hero-showcase">
+          <div class="hero-showcase-inner">
+            <img src="assets/hero-preview.jpg" alt="LeetCode AI Copilot Chrome Extension Interface" id="heroMockupImg" width="1200" height="675">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Simulator / Playground Section -->
+    <section class="section" id="simulator">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Interactive Experience</span>
+          <h2 class="section-title">Test the Agent Live in Your Browser</h2>
+          <p class="section-desc">Experience how LeetCode AI Copilot extracts problem context, selects frontier reasoning models, and synthesizes optimal code solutions.</p>
+        </div>
+
+        <div class="playground-card" id="playgroundCard">
+          <!-- Topbar Controls -->
+          <div class="playground-topbar">
+            <div class="playground-controls">
+              <div class="select-group">
+                <label for="playgroundProblemSelect">Problem:</label>
+                <select id="playgroundProblemSelect" class="custom-select">
+                  <option value="two-sum">1. Two Sum (Easy)</option>
+                  <option value="trapping-rain-water">42. Trapping Rain Water (Hard)</option>
+                  <option value="lru-cache">146. LRU Cache (Medium)</option>
+                </select>
+              </div>
+
+              <div class="select-group">
+                <label for="playgroundModelSelect">Model:</label>
+                <select id="playgroundModelSelect" class="custom-select">
+                  <option value="gemini-4-argon">Gemini 4 Argon (Reasoning & Edge Cases)</option>
+                  <option value="gpt-6-astra">GPT-6 Astra (Synthesis & Speed)</option>
+                  <option value="gpt-6.1-sol">GPT-6.1 Sol (Chain-of-Thought)</option>
+                  <option value="gemini-3.8-flash">Gemini 3.8 Flash (Low Latency)</option>
+                </select>
+              </div>
+
+              <div class="select-group">
+                <label for="playgroundLangSelect">Language:</label>
+                <select id="playgroundLangSelect" class="custom-select">
+                  <option value="python">Python 3</option>
+                  <option value="cpp">C++ 20</option>
+                  <option value="java">Java 17</option>
+                  <option value="typescript">TypeScript</option>
+                  <option value="golang">Go 1.21</option>
+                </select>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-sm btn-glow" id="playgroundSolveBtn">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+              Solve with Copilot
+            </button>
+          </div>
+
+          <!-- Dual Pane Workspace -->
+          <div class="playground-workspace">
+            <!-- Left: Problem Context -->
+            <div class="problem-pane">
+              <div class="problem-badge-row">
+                <span class="badge-difficulty badge-easy" id="playgroundProblemBadge">Easy</span>
+                <span style="font-size: 0.78rem; color: var(--text-muted);" id="playgroundProblemCategory">Array · Hash Table</span>
+              </div>
+              <h3 class="problem-title" id="playgroundProblemTitle">1. Two Sum</h3>
+              <div class="problem-statement" id="playgroundProblemStatement">
+                Given an array of integers <code>nums</code> and an integer <code>target</code>, return indices of the two numbers such that they add up to <code>target</code>.
+              </div>
+              <div class="problem-meta-box">
+                <strong style="display:block; margin-bottom: 4px; color: #a78bfa;">Algorithmic Strategy:</strong>
+                <span id="playgroundExplanation">Single-pass hash map algorithm stores visited numbers with their index. For each number x, we look up whether (target - x) already exists in O(1) time.</span>
+              </div>
+            </div>
+
+            <!-- Right: Monaco Editor Simulator -->
+            <div class="editor-pane">
+              <div class="editor-header">
+                <div class="editor-tabs">
+                  <div class="editor-tab active">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span id="editorActiveTab">solution.py</span>
+                  </div>
+                </div>
+                <div class="editor-actions">
+                  <button class="btn btn-secondary btn-sm" id="editorCopyBtn" title="Copy solution code">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                    Copy Code
+                  </button>
+                  <button class="btn btn-chrome btn-sm" id="editorInjectBtn" title="Simulate direct insertion into Monaco editor">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    Simulate Monaco Injection
+                  </button>
+                </div>
+              </div>
+
+              <!-- Code Output -->
+              <pre class="editor-body"><code id="editorCodeOutput"></code></pre>
+
+              <!-- Footer Metrics -->
+              <div class="editor-footer">
+                <div class="metrics-row">
+                  <span class="metric-pill metric-time" id="playgroundMetricTime">Time: O(N)</span>
+                  <span class="metric-pill metric-space" id="playgroundMetricSpace">Space: O(N)</span>
+                  <span class="metric-pill metric-latency" id="playgroundMetricLatency">Latency: 1,120 ms</span>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                  Verified on LeetCode test suite (100% acceptance)
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Key Features Section -->
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Key Innovations</span>
+          <h2 class="section-title">Engineered Specifically for LeetCode</h2>
+          <p class="section-desc">Traditional AI chatbots force you to copy-paste back and forth. LeetCode AI Copilot integrates directly into the page DOM and Monaco code editor.</p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon-wrapper icon-purple">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1010 10H12V2z"/><path d="M12 12L2.5 7.5"/></svg>
+            </div>
+            <h3 class="feature-title">Frontier Reasoning Models</h3>
+            <p class="feature-description">
+              Powered by Google Gemini 4 Argon, OpenAI GPT-6 Astra, and GPT-6.1 Sol. Analyzes algorithmic constraints, guarantees optimal time/space complexity, and avoids brute-force traps.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-wrapper icon-cyan">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <h3 class="feature-title">Native Monaco Editor Bridge</h3>
+            <p class="feature-description">
+              Direct script-injection bridge into LeetCode's active Monaco Editor instance. Injects code cleanly while preserving full undo/redo history (Ctrl+Z) without breaking page state.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-wrapper icon-emerald">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            </div>
+            <h3 class="feature-title">Zero-Secret Local Proxy</h3>
+            <p class="feature-description">
+              Want 100% key security? Run the built-in standalone Node proxy (<code>server/local-backend.mjs</code>). Your API credentials never touch Chrome extension storage.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-wrapper icon-amber">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <h3 class="feature-title">Overwrite Protection & Diff</h3>
+            <p class="feature-description">
+              Never accidentally wipe out your code. If the editor contains your existing implementation, the Copilot triggers an interactive diff review before replacing.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-wrapper icon-purple">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <h3 class="feature-title">Spending Safeguards</h3>
+            <p class="feature-description">
+              Set configurable daily request caps and prompt confirmation alerts before calling high-cost reasoning models. Protects your wallet from unexpected API charges.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-wrapper icon-cyan">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            </div>
+            <h3 class="feature-title">Dual DOM & GraphQL Parser</h3>
+            <p class="feature-description">
+              Resilient against LeetCode front-end redesigns. Scrapes DOM selectors first, and gracefully falls back to the official LeetCode GraphQL schema to fetch clean problem statements.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Model Comparison Matrix -->
+    <section class="section" id="models">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Model Benchmarks</span>
+          <h2 class="section-title">Supported Frontier Models</h2>
+          <p class="section-desc">Choose the right balance of speed, chain-of-thought depth, and cost for your practice goals.</p>
+        </div>
+
+        <div class="models-table-wrapper">
+          <table class="models-table">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Provider</th>
+                <th>Specialization</th>
+                <th>Avg Latency</th>
+                <th>Best For</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="model-name-cell">
+                    <span style="color:#a78bfa;">✦</span>
+                    <strong>gemini-4-argon</strong>
+                  </div>
+                </td>
+                <td>Google Gemini</td>
+                <td>Deep frontier reasoning, constraint validation & edge cases</td>
+                <td>~1,100 ms</td>
+                <td><span class="badge-difficulty badge-hard">Hard</span> <span class="badge-difficulty badge-medium">Medium</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="model-name-cell">
+                    <span style="color:#38bdf8;">✦</span>
+                    <strong>gpt-6-astra</strong>
+                  </div>
+                </td>
+                <td>OpenAI</td>
+                <td>Frontier code synthesis, ultra-clean idiomatic style</td>
+                <td>~950 ms</td>
+                <td><span class="badge-difficulty badge-hard">Hard</span> <span class="badge-difficulty badge-medium">Medium</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="model-name-cell">
+                    <span style="color:#f59e0b;">✦</span>
+                    <strong>gpt-6.1-sol</strong>
+                  </div>
+                </td>
+                <td>OpenAI</td>
+                <td>Extreme multi-step chain-of-thought for hard dynamic programming</td>
+                <td>~1,800 ms</td>
+                <td><span class="badge-difficulty badge-hard">Hard / Contest</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="model-name-cell">
+                    <span style="color:#10b981;">✦</span>
+                    <strong>gemini-3.8-flash</strong>
+                  </div>
+                </td>
+                <td>Google Gemini</td>
+                <td>Sub-second low latency for rapid iterations and hints</td>
+                <td>~420 ms</td>
+                <td><span class="badge-difficulty badge-easy">Easy</span> <span class="badge-difficulty badge-medium">Medium</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step-by-Step Installation Section -->
+    <section class="section" id="install">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Get Started</span>
+          <h2 class="section-title">Install in Under 60 Seconds</h2>
+          <p class="section-desc">Download the extension bundle and load it into Google Chrome or any Chromium browser (Brave, Edge, Arc, Opera).</p>
+        </div>
+
+        <div class="install-steps">
+          <div class="step-card">
+            <div class="step-badge">1</div>
+            <h3 class="step-title">Download Package</h3>
+            <p class="step-text">
+              Click the download button below to get <code>leetcode-copilot-extension.zip</code>. Unzip the archive into any folder on your computer.
+            </p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-badge">2</div>
+            <h3 class="step-title">Enable Developer Mode</h3>
+            <p class="step-text">
+              Open Google Chrome and navigate to <code>chrome://extensions</code>. Toggle the <strong>Developer mode</strong> switch in the top-right corner.
+            </p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-badge">3</div>
+            <h3 class="step-title">Load Unpacked</h3>
+            <p class="step-text">
+              Click the <strong>Load unpacked</strong> button on the top-left, and select the unzipped directory containing <code>manifest.json</code>.
+            </p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-badge">4</div>
+            <h3 class="step-title">Open LeetCode</h3>
+            <p class="step-text">
+              Open any problem on <code>leetcode.com/problems/...</code>, click the Copilot icon in your toolbar, and generate your first solution!
+            </p>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 40px;">
+          <a href="downloads/leetcode-copilot-extension.zip" class="btn btn-chrome btn-lg btn-glow trigger-install-modal" id="installDownloadBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Download Extension (.zip) — v1.2.0
+          </a>
+        </div>
+
+        <!-- CLI Quickstart for Developers -->
+        <div class="cli-card">
+          <div class="cli-header">
+            <span class="cli-title">⚡ Or build from source via Terminal:</span>
+            <button class="btn btn-secondary btn-sm" id="copyCliBtn">Copy Command</button>
+          </div>
+          <div class="cli-code">
+            <code>git clone https://github.com/AntaripC/LeetCodeAgent.git &amp;&amp; cd LeetCodeAgent &amp;&amp; npm install &amp;&amp; npm run build</code>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="section" id="faq">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Questions & Answers</span>
+          <h2 class="section-title">Frequently Asked Questions</h2>
+        </div>
+
+        <div class="faq-grid">
+          <div class="faq-item active">
+            <button class="faq-question">
+              <span>Is LeetCode AI Copilot completely free to use?</span>
+              <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+              Yes! The extension is 100% free and open-source under the MIT license. You simply connect your own Google Gemini or OpenAI API key (or local proxy backend) with direct pay-per-token pricing with zero markup or subscription fees.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>How are my API keys stored securely?</span>
+              <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+              You have two options: (1) Direct Extension Mode: Keys are stored exclusively in Chrome's encrypted local storage (`chrome.storage.local`) on your machine. (2) Local Backend Mode: Run `node server/local-backend.mjs` on your computer — keys stay inside your `.env` file and are never sent to the browser extension bundle.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Will this overwrite my existing code in LeetCode?</span>
+              <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+              No. The extension contains built-in Overwrite Protection. If the editor contains more than boilerplate comments, it prompts you with an interactive code preview before replacing anything. Furthermore, all Monaco Editor injections support native `Ctrl+Z` / `Cmd+Z` undo.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>What happens if LeetCode changes their website layout?</span>
+              <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+              LeetCode AI Copilot features a resilient dual-tier parser. If DOM selector scraping fails due to front-end changes, it automatically falls back to LeetCode's official GraphQL API endpoint to fetch clean problem descriptions, constraints, and metadata.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Can I use this on other Chromium browsers (Brave, Edge, Arc)?</span>
+              <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+              Yes! The extension is built strictly against the official Chromium Manifest V3 specification. It works out of the box on Google Chrome, Brave Browser, Microsoft Edge, Arc, Opera, and Vivaldi.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Interactive Installation Modal -->
+  <div class="modal-overlay" id="installModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-content">
+      <button class="modal-close-btn" id="closeModalBtn" aria-label="Close Modal">&times;</button>
+      <h3 class="modal-title" id="modalTitle">Add LeetCode Copilot to Chrome</h3>
+      <p class="modal-desc">Follow these quick steps to load the extension into your browser.</p>
+
+      <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 18px; margin-bottom: 24px;">
+        <div style="font-weight: 700; color: #38bdf8; margin-bottom: 6px;">Step 1: Download Extension Package</div>
+        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 14px;">
+          Download the pre-built, production-ready extension archive:
+        </p>
+        <a href="downloads/leetcode-copilot-extension.zip" class="btn btn-chrome btn-sm" id="modalDownloadBtn" download>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Download leetcode-copilot-extension.zip (~120 KB)
+        </a>
+      </div>
+
+      <div style="margin-bottom: 24px; font-size: 0.9rem; color: var(--text-secondary); line-height: 1.7;">
+        <div><strong>Step 2:</strong> Unzip the downloaded file on your computer.</div>
+        <div><strong>Step 3:</strong> Open <code>chrome://extensions</code> in Chrome and switch on <strong>Developer mode</strong>.</div>
+        <div><strong>Step 4:</strong> Click <strong>Load unpacked</strong> and select the unzipped directory.</div>
+        <div><strong>Step 5:</strong> Pin the icon in your toolbar, open LeetCode, and enjoy AI pair programming!</div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px;">
+        <a href="https://github.com/AntaripC/LeetCodeAgent" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+          View on GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand-col">
+          <div class="nav-brand">
+            <div class="brand-icon">
+              <img src="assets/icons/icon-32.png" alt="LeetCode AI Copilot">
+            </div>
+            <span class="brand-text">LeetCode Copilot</span>
+          </div>
+          <p class="footer-brand-desc">
+            Empowering developers to conquer complex algorithms with frontier intelligence and Monaco Editor automation.
+          </p>
+        </div>
+
+        <div class="footer-links-group">
+          <div class="footer-col">
+            <h4>Product</h4>
+            <ul>
+              <li><a href="#simulator">Live Playground</a></li>
+              <li><a href="#features">Features</a></li>
+              <li><a href="#models">Supported Models</a></li>
+              <li><a href="#install">Install Guide</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <h4>Open Source</h4>
+            <ul>
+              <li><a href="https://github.com/AntaripC/LeetCodeAgent" target="_blank" rel="noopener noreferrer">GitHub Repository</a></li>
+              <li><a href="https://github.com/AntaripC/LeetCodeAgent/issues" target="_blank" rel="noopener noreferrer">Issue Tracker</a></li>
+              <li><a href="https://github.com/AntaripC/LeetCodeAgent/blob/main/README.md" target="_blank" rel="noopener noreferrer">Documentation</a></li>
+              <li><a href="https://github.com/AntaripC/LeetCodeAgent/blob/main/CHROMEWEBSTORE.md" target="_blank" rel="noopener noreferrer">Web Store Submission</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>&copy; 2026 AntaripC. Released under the MIT License.</div>
+        <div>Designed for Chrome, Brave, Edge &amp; Arc.</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Script -->
+  <script src="js/main.js"></script>
+</body>
+</html>
