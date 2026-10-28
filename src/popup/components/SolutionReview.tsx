@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, ArrowRightCircle, Check, Code, BookOpen, Clock, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Copy, ArrowRightCircle, Check, Code, BookOpen, Clock, ShieldCheck, Download, Trash2 } from 'lucide-react';
 import { AISolutionResponse } from '../../types';
 import { LanguageRegistry } from '../../solver/language-registry';
 
@@ -8,13 +8,15 @@ interface SolutionReviewProps {
   isInserting: boolean;
   onCopyCode: () => void;
   onInsertCode: (forceOverwrite?: boolean) => void;
+  onClearSolution?: () => void;
 }
 
 export const SolutionReview: React.FC<SolutionReviewProps> = ({
   solution,
   isInserting,
   onCopyCode,
-  onInsertCode
+  onInsertCode,
+  onClearSolution
 }) => {
   const [activeTab, setActiveTab] = useState<'code' | 'explanation' | 'complexity' | 'edgeCases'>('code');
   const [copied, setCopied] = useState(false);
@@ -25,6 +27,27 @@ export const SolutionReview: React.FC<SolutionReviewProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleDownload = () => {
+    const extMap: Record<string, string> = {
+      python: 'py',
+      python3: 'py',
+      cpp: 'cpp',
+      java: 'java',
+      typescript: 'ts',
+      javascript: 'js',
+      golang: 'go',
+      rust: 'rs'
+    };
+    const ext = extMap[solution.language.toLowerCase()] || 'txt';
+    const blob = new Blob([solution.code], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `solution.${ext}`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const displayName = LanguageRegistry.getDisplayName(solution.language);
 
   return (
@@ -33,6 +56,7 @@ export const SolutionReview: React.FC<SolutionReviewProps> = ({
         <button
           className={`tab-btn ${activeTab === 'code' ? 'active' : ''}`}
           onClick={() => setActiveTab('code')}
+          title="View full generated code"
         >
           <Code size={12} style={{ display: 'inline', marginRight: '4px' }} />
           Code ({displayName})
@@ -41,6 +65,7 @@ export const SolutionReview: React.FC<SolutionReviewProps> = ({
         <button
           className={`tab-btn ${activeTab === 'explanation' ? 'active' : ''}`}
           onClick={() => setActiveTab('explanation')}
+          title="View algorithm, strategy & correctness proof"
         >
           <BookOpen size={12} style={{ display: 'inline', marginRight: '4px' }} />
           Algorithm & Intuition
@@ -49,6 +74,7 @@ export const SolutionReview: React.FC<SolutionReviewProps> = ({
         <button
           className={`tab-btn ${activeTab === 'complexity' ? 'active' : ''}`}
           onClick={() => setActiveTab('complexity')}
+          title="View time and space complexity analysis"
         >
           <Clock size={12} style={{ display: 'inline', marginRight: '4px' }} />
           Complexity
@@ -57,6 +83,7 @@ export const SolutionReview: React.FC<SolutionReviewProps> = ({
         <button
           className={`tab-btn ${activeTab === 'edgeCases' ? 'active' : ''}`}
           onClick={() => setActiveTab('edgeCases')}
+          title="View handled edge cases"
         >
           <ShieldCheck size={12} style={{ display: 'inline', marginRight: '4px' }} />
           Edge Cases ({solution.edgeCases?.length || 0})
@@ -79,6 +106,16 @@ export const SolutionReview: React.FC<SolutionReviewProps> = ({
               </button>
 
               <button
+                className="btn btn-secondary"
+                onClick={handleDownload}
+                style={{ fontSize: '11px', padding: '4px 8px' }}
+                title="Download solution source file"
+              >
+                <Download size={12} />
+                Save
+              </button>
+
+              <button
                 className="btn btn-primary"
                 onClick={() => onInsertCode(false)}
                 disabled={isInserting}
@@ -88,6 +125,17 @@ export const SolutionReview: React.FC<SolutionReviewProps> = ({
                 <ArrowRightCircle size={12} />
                 {isInserting ? 'Inserting...' : 'Insert Code'}
               </button>
+
+              {onClearSolution && (
+                <button
+                  className="icon-button"
+                  onClick={onClearSolution}
+                  style={{ padding: '4px 6px' }}
+                  title="Clear generated solution"
+                >
+                  <Trash2 size={12} />
+                </button>
+              )}
             </div>
           </div>
           <div className="code-content">{solution.code}</div>

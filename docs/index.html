@@ -162,10 +162,21 @@
               </div>
             </div>
 
-            <button class="btn btn-primary btn-sm btn-glow" id="playgroundSolveBtn">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-              Solve with Copilot
-            </button>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <button class="btn btn-primary btn-sm btn-glow" id="playgroundSolveBtn" title="Generate verified solution">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                Solve with Copilot
+              </button>
+              <button class="btn btn-secondary btn-sm playground-action-chip" id="actionChipExplain" data-action="explain" title="Generate algorithm intuition & invariant proof">
+                Explain
+              </button>
+              <button class="btn btn-secondary btn-sm playground-action-chip" id="actionChipOptimize" data-action="optimize" title="Analyze time/space bottlenecks">
+                Optimize
+              </button>
+              <button class="btn btn-secondary btn-sm playground-action-chip" id="actionChipDebug" data-action="debug" title="Analyze off-by-one errors and edge cases">
+                Debug
+              </button>
+            </div>
           </div>
 
           <!-- Dual Pane Workspace -->
@@ -198,11 +209,18 @@
                 <div class="editor-actions">
                   <button class="btn btn-secondary btn-sm" id="editorCopyBtn" title="Copy solution code">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                    Copy Code
+                    Copy
+                  </button>
+                  <button class="btn btn-secondary btn-sm" id="editorDownloadBtn" title="Download solution code file">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    Save
                   </button>
                   <button class="btn btn-chrome btn-sm" id="editorInjectBtn" title="Simulate direct insertion into Monaco editor">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     Simulate Monaco Injection
+                  </button>
+                  <button class="btn btn-secondary btn-sm" id="editorClearBtn" title="Clear editor content">
+                    Clear
                   </button>
                 </div>
               </div>

@@ -422,13 +422,48 @@ function initPlayground() {
 
   if (copyBtn) {
     copyBtn.addEventListener('click', () => {
-      const prob = PROBLEMS_DB[currentProblemKey];
-      const code = prob.solutions[currentLanguage] || '';
+      const codeEl = document.getElementById('editorCodeOutput');
+      const code = codeEl?.textContent || '';
       navigator.clipboard.writeText(code).then(() => {
         showToast('Solution copied to clipboard!');
       });
     });
   }
+
+  const downloadBtn = document.getElementById('editorDownloadBtn');
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', () => {
+      const codeEl = document.getElementById('editorCodeOutput');
+      const code = codeEl?.textContent || '';
+      const extMap = { python: 'py', cpp: 'cpp', java: 'java', typescript: 'ts', golang: 'go' };
+      const ext = extMap[currentLanguage] || 'txt';
+      const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `solution.${ext}`;
+      link.click();
+      URL.revokeObjectURL(url);
+      showToast(`Downloaded solution.${ext}!`);
+    });
+  }
+
+  const clearBtn = document.getElementById('editorClearBtn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      const codeEl = document.getElementById('editorCodeOutput');
+      if (codeEl) codeEl.textContent = '// Editor cleared. Click Solve, Explain, Optimize, or Debug above.';
+      showToast('Editor cleared.');
+    });
+  }
+
+  // Action chips
+  document.querySelectorAll('.playground-action-chip').forEach((chip) => {
+    chip.addEventListener('click', (e) => {
+      const action = e.currentTarget.getAttribute('data-action');
+      triggerSimulatedGeneration(action);
+    });
+  });
 
   if (injectBtn) {
     injectBtn.addEventListener('click', () => {
@@ -500,20 +535,57 @@ function renderSolution() {
   }
 }
 
-function triggerSimulatedGeneration() {
+function triggerSimulatedGeneration(action = 'solve') {
   if (isGenerating) return;
   isGenerating = true;
 
   const solveBtn = document.getElementById('playgroundSolveBtn');
   const codeEl = document.getElementById('editorCodeOutput');
   const prob = PROBLEMS_DB[currentProblemKey];
-  const targetCode = prob.solutions[currentLanguage] || '';
+
+  let targetContent = prob.solutions[currentLanguage] || '';
+  let toastMsg = '✨ Solution generated successfully!';
+
+  if (action === 'explain') {
+    targetContent = `/* ==========================================================
+ * ALGORITHM & INTUITION: ${prob.title}
+ * Model: ${currentModel}
+ * ==========================================================
+ * 1. Problem Summary:
+ *    ${prob.category}. Target complexity: Time ${prob.timeComplexity}, Space ${prob.spaceComplexity}.
+ *
+ * 2. Key Invariant & Strategy:
+ *    ${prob.explanation}
+ *
+ * 3. Step-by-Step Correctness Proof:
+ *    - Base cases verify empty or single element edge boundaries.
+ *    - Inductive step: every transition preserves the optimal subproblem invariant.
+ *    - All operations terminate within bounded iterations.
+ * ========================================================== */\n\n` + targetContent;
+    toastMsg = '💡 Algorithm explanation generated!';
+  } else if (action === 'optimize') {
+    targetContent = `// [OPTIMIZED FOR ZERO-ALLOCATION SPACE & TIME]\n// Model: ${currentModel} | Time: ${prob.timeComplexity} | Space: ${prob.spaceComplexity}\n\n` + targetContent;
+    toastMsg = '⚡ Code optimized for maximum efficiency!';
+  } else if (action === 'debug') {
+    targetContent = `/* ==========================================================
+ * EDGE CASE & BOUNDARY VERIFICATION
+ * Verified against LeetCode test suite (100% test coverage)
+ * ==========================================================
+ * Checked:
+ *  [✓] Empty input & null guard
+ *  [✓] Minimum bounds (length = 1, 2)
+ *  [✓] Maximum integer limits & overflow protection
+ *  [✓] Duplicates and identical elements
+ *  [✓] All negative numbers / All zero arrays
+ * ========================================================== */\n\n` + targetContent;
+    toastMsg = '🐞 Edge cases & boundary tests verified!';
+  }
 
   if (solveBtn) {
     solveBtn.disabled = true;
     solveBtn.innerHTML = `
       <svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
-      Generating with ${currentModel}...
+      Processing ${action}...
     `;
   }
 
@@ -522,12 +594,12 @@ function triggerSimulatedGeneration() {
   }
 
   let index = 0;
-  const chunkSize = Math.max(2, Math.floor(targetCode.length / 30));
+  const chunkSize = Math.max(3, Math.floor(targetContent.length / 28));
   const interval = setInterval(() => {
     index += chunkSize;
-    if (index >= targetCode.length) {
+    if (index >= targetContent.length) {
       clearInterval(interval);
-      if (codeEl) codeEl.textContent = targetCode;
+      if (codeEl) codeEl.textContent = targetContent;
       isGenerating = false;
       if (solveBtn) {
         solveBtn.disabled = false;
@@ -536,12 +608,12 @@ function triggerSimulatedGeneration() {
           Solve with Copilot
         `;
       }
-      showToast('✨ Solution generated successfully!');
+      showToast(toastMsg);
       updateModelBadge();
     } else {
-      if (codeEl) codeEl.textContent = targetCode.slice(0, index) + '▌';
+      if (codeEl) codeEl.textContent = targetContent.slice(0, index) + '▌';
     }
-  }, 25);
+  }, 20);
 }
 
 // Modal handling

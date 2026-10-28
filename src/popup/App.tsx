@@ -24,6 +24,30 @@ import { ExtensionStorage, DEFAULT_SETTINGS } from '../storage/extension-storage
 import { ProviderFactory } from '../providers/provider-factory';
 import { LanguageRegistry } from '../solver/language-registry';
 
+const DEMO_PROBLEM: ProblemContext = {
+  title: '1. Two Sum',
+  slug: 'two-sum',
+  url: 'https://leetcode.com/problems/two-sum/',
+  difficulty: 'Easy',
+  statement:
+    'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\n\nYou can return the answer in any order.',
+  examples: [
+    {
+      input: 'nums = [2,7,11,15], target = 9',
+      output: '[0,1]',
+      explanation: 'Because nums[0] + nums[1] == 9, we return [0, 1].'
+    }
+  ],
+  constraints: [
+    '2 <= nums.length <= 10^4',
+    '-10^9 <= nums[i] <= 10^9',
+    '-10^9 <= target <= 10^9',
+    'Only one valid answer exists.'
+  ],
+  starterCode: 'class Solution:\n    def twoSum(self, nums: List[int], target: int) -> List[int]:\n        pass',
+  editorLanguage: 'python3'
+};
+
 export const App: React.FC = () => {
   const [settings, setSettings] = useState<ExtensionSettings>(DEFAULT_SETTINGS);
   const [problem, setProblem] = useState<ProblemContext | null>(null);
@@ -443,6 +467,31 @@ export const App: React.FC = () => {
     });
   };
 
+  const handleLoadDemoProblem = () => {
+    setProblem(DEMO_PROBLEM);
+    setStatus({
+      level: 'info',
+      message: 'Loaded demo problem "1. Two Sum". You can test all generation and optimization actions!'
+    });
+  };
+
+  const handleClearProblem = () => {
+    setProblem(null);
+    setSolution(null);
+    setStatus({
+      level: 'info',
+      message: 'Active problem cleared.'
+    });
+  };
+
+  const handleClearSolution = () => {
+    setSolution(null);
+    setStatus({
+      level: 'info',
+      message: 'Solution cleared.'
+    });
+  };
+
   const isConfigured = ProviderFactory.getProvider(settings.selectedProvider).isConfigured(settings);
 
   return (
@@ -469,6 +518,8 @@ export const App: React.FC = () => {
           problem={problem}
           isLoading={isLoadingProblem}
           onRefresh={scanActiveTab}
+          onLoadDemo={handleLoadDemoProblem}
+          onClearProblem={handleClearProblem}
         />
 
         <ModelSection
@@ -489,10 +540,14 @@ export const App: React.FC = () => {
 
         <ActionButtons
           isGenerating={isGenerating}
-          disabled={!problem || !isConfigured}
+          hasProblem={!!problem}
+          isConfigured={isConfigured}
+          providerName={ProviderFactory.getProvider(settings.selectedProvider).name}
           currentAction={currentAction}
           hasExistingSolution={!!solution}
           onExecuteAction={handleExecuteAction}
+          onOpenSettings={() => setSettingsModalOpen(true)}
+          onLoadDemoProblem={handleLoadDemoProblem}
         />
 
         {solution && (
@@ -501,6 +556,7 @@ export const App: React.FC = () => {
             isInserting={isInserting}
             onCopyCode={handleCopyCode}
             onInsertCode={handleInsertCode}
+            onClearSolution={handleClearSolution}
           />
         )}
       </main>
@@ -523,6 +579,13 @@ export const App: React.FC = () => {
           onSaveProblems={async (problems) => {
             await ExtensionStorage.saveImportedProblems(problems);
             setImportedProblems(problems);
+          }}
+          onSelectProblem={(selected) => {
+            setProblem(selected);
+            setStatus({
+              level: 'info',
+              message: `Selected "${selected.title}" (${selected.difficulty}). Ready to solve!`
+            });
           }}
           onClose={() => setImportModalOpen(false)}
         />

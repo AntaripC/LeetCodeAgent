@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Check, Activity, ShieldAlert, Server, Shield, Clock, AlertTriangle } from 'lucide-react';
+import { X, Check, Activity, ShieldAlert, Server, Shield, Clock, AlertTriangle, Eye, EyeOff, RotateCcw, Download, Trash2 } from 'lucide-react';
 import { ExtensionSettings, AIProviderType, ProviderConnectionTestResult } from '../../types';
+import { DEFAULT_SETTINGS } from '../../storage/extension-storage';
 
 interface SettingsModalProps {
   settings: ExtensionSettings;
@@ -19,8 +20,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [activeTab, setActiveTab] = useState<'gemini' | 'openai' | 'custom' | 'backend' | 'safeguards' | 'usage'>('gemini');
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<ProviderConnectionTestResult | null>(null);
+  const [showGeminiKey, setShowGeminiKey] = useState(false);
+  const [showOpenaiKey, setShowOpenaiKey] = useState(false);
+  const [showCustomKey, setShowCustomKey] = useState(false);
+  const [savedSuccess, setSavedSuccess] = useState(false);
 
   const handleTest = async (provider: AIProviderType) => {
+    const key =
+      provider === 'gemini'
+        ? formData.geminiApiKey
+        : provider === 'openai'
+        ? formData.openaiApiKey
+        : formData.customApiKey;
+
+    const isLocalEnabled = formData.localBackend?.enabled;
+
+    if (!isLocalEnabled && (!key || !key.trim())) {
+      setTestResult({
+        success: false,
+        message: `Please enter an API key for ${
+          provider === 'gemini' ? 'Google Gemini' : provider === 'openai' ? 'OpenAI' : 'Custom Provider'
+        } first, or enable the Local Proxy.`
+      });
+      return;
+    }
+
     setTesting(true);
     setTestResult(null);
     try {
@@ -39,7 +63,38 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleSaveAndClose = () => {
     onSave(formData);
-    onClose();
+    setSavedSuccess(true);
+    setTimeout(() => {
+      onClose();
+    }, 400);
+  };
+
+  const handleResetDefaults = () => {
+    if (confirm('Reset all settings to recommended defaults?')) {
+      setFormData({ ...DEFAULT_SETTINGS });
+      setTestResult({
+        success: true,
+        message: 'Settings reset to defaults. Click "Save Changes" to apply.'
+      });
+    }
+  };
+
+  const handleExportLogs = () => {
+    const logs = formData.usageHistory || [];
+    const blob = new Blob([JSON.stringify(logs, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `leetcode-copilot-usage-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleClearLogs = () => {
+    if (confirm('Clear all local usage history and metrics?')) {
+      setFormData({ ...formData, usageHistory: [] });
+      setTestResult({ success: true, message: 'Usage history cleared.' });
+    }
   };
 
   return (
@@ -47,7 +102,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       <div className="modal-content" style={{ maxWidth: '440px' }}>
         <div className="modal-header">
           <h2>Settings, Models & Safeguards</h2>
-          <button className="icon-button" onClick={onClose}>
+          <button className="icon-button" onClick={onClose} title="Close Settings">
             <X size={16} />
           </button>
         </div>
@@ -57,35 +112,47 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <button
               className={`tab-btn ${activeTab === 'gemini' ? 'active' : ''}`}
               onClick={() => { setActiveTab('gemini'); setTestResult(null); }}
+              title="Google Gemini API key and frontier model options"
             >
               Gemini
             </button>
             <button
               className={`tab-btn ${activeTab === 'openai' ? 'active' : ''}`}
               onClick={() => { setActiveTab('openai'); setTestResult(null); }}
+              title="OpenAI API key and GPT-6 models"
             >
               OpenAI
             </button>
             <button
+              className={`tab-btn ${activeTab === 'custom' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('custom'); setTestResult(null); }}
+              title="Self-hosted Ollama, Groq, or vLLM endpoints"
+            >
+              Custom
+            </button>
+            <button
               className={`tab-btn ${activeTab === 'backend' ? 'active' : ''}`}
               onClick={() => { setActiveTab('backend'); setTestResult(null); }}
+              title="Local zero-secret proxy server"
             >
-              <Server size={11} style={{ display: 'inline', marginRight: '2px' }} />
+              <Server size={11} style={{ marginRight: '3px', display: 'inline' }} />
               Local Proxy
             </button>
             <button
               className={`tab-btn ${activeTab === 'safeguards' ? 'active' : ''}`}
               onClick={() => { setActiveTab('safeguards'); setTestResult(null); }}
+              title="Daily request caps and budget safeguards"
             >
-              <Shield size={11} style={{ display: 'inline', marginRight: '2px' }} />
+              <Shield size={11} style={{ marginRight: '3px', display: 'inline' }} />
               Safeguards
             </button>
             <button
               className={`tab-btn ${activeTab === 'usage' ? 'active' : ''}`}
               onClick={() => { setActiveTab('usage'); setTestResult(null); }}
+              title="Usage logs and latency telemetry"
             >
-              <Clock size={11} style={{ display: 'inline', marginRight: '2px' }} />
-              Logs ({formData.usageRecords?.length || 0})
+              <Clock size={11} style={{ marginRight: '3px', display: 'inline' }} />
+              Logs
             </button>
           </div>
 
@@ -103,13 +170,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     Get free key &rarr;
                   </a>
                 </label>
-                <input
-                  type="password"
-                  className="text-input"
-                  placeholder="AIzaSy..."
-                  value={formData.geminiApiKey}
-                  onChange={(e) => setFormData({ ...formData, geminiApiKey: e.target.value })}
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showGeminiKey ? 'text' : 'password'}
+                    className="text-input"
+                    placeholder="AIzaSy..."
+                    value={formData.geminiApiKey}
+                    onChange={(e) => setFormData({ ...formData, geminiApiKey: e.target.value })}
+                    style={{ paddingRight: '32px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowGeminiKey(!showGeminiKey)}
+                    className="icon-button"
+                    style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)' }}
+                    title={showGeminiKey ? 'Hide key' : 'Show key'}
+                  >
+                    {showGeminiKey ? <EyeOff size={13} /> : <Eye size={13} />}
+                  </button>
+                </div>
               </div>
 
               <div className="form-group">
@@ -140,8 +219,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               <button
                 className="btn btn-secondary"
-                disabled={testing || (!formData.geminiApiKey.trim() && !formData.localBackend?.enabled)}
+                disabled={testing}
                 onClick={() => handleTest('gemini')}
+                title="Send test ping to Gemini API"
               >
                 <Activity size={13} className={testing ? 'spinner' : ''} />
                 {testing ? 'Testing Gemini Connection...' : 'Test Connection'}
@@ -163,13 +243,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     Get key &rarr;
                   </a>
                 </label>
-                <input
-                  type="password"
-                  className="text-input"
-                  placeholder="sk-proj-..."
-                  value={formData.openaiApiKey}
-                  onChange={(e) => setFormData({ ...formData, openaiApiKey: e.target.value })}
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showOpenaiKey ? 'text' : 'password'}
+                    className="text-input"
+                    placeholder="sk-proj-..."
+                    value={formData.openaiApiKey}
+                    onChange={(e) => setFormData({ ...formData, openaiApiKey: e.target.value })}
+                    style={{ paddingRight: '32px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowOpenaiKey(!showOpenaiKey)}
+                    className="icon-button"
+                    style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)' }}
+                    title={showOpenaiKey ? 'Hide key' : 'Show key'}
+                  >
+                    {showOpenaiKey ? <EyeOff size={13} /> : <Eye size={13} />}
+                  </button>
+                </div>
               </div>
 
               <div className="form-group">
@@ -211,8 +303,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               <button
                 className="btn btn-secondary"
-                disabled={testing || (!formData.openaiApiKey.trim() && !formData.localBackend?.enabled)}
+                disabled={testing}
                 onClick={() => handleTest('openai')}
+                title="Send test ping to OpenAI API"
               >
                 <Activity size={13} className={testing ? 'spinner' : ''} />
                 {testing ? 'Testing OpenAI Connection...' : 'Test Connection'}
@@ -220,13 +313,80 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           )}
 
-          {activeTab === 'backend' && (
+          {activeTab === 'custom' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                Keep API keys completely off the browser extension by routing requests through a local proxy server.
+              <div className="form-group">
+                <label className="form-label">Endpoint Base URL</label>
+                <input
+                  type="text"
+                  className="text-input"
+                  placeholder="http://localhost:11434/v1"
+                  value={formData.customBaseUrl}
+                  onChange={(e) => setFormData({ ...formData, customBaseUrl: e.target.value })}
+                />
               </div>
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
+              <div className="form-group">
+                <label className="form-label">Model Name</label>
+                <input
+                  type="text"
+                  className="text-input"
+                  placeholder="llama-3.3-70b-versatile or qwen2.5-coder:32b"
+                  value={formData.customModel}
+                  onChange={(e) => setFormData({ ...formData, customModel: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">API Key (Optional for local Ollama)</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showCustomKey ? 'text' : 'password'}
+                    className="text-input"
+                    placeholder="ollama or your-api-key"
+                    value={formData.customApiKey}
+                    onChange={(e) => setFormData({ ...formData, customApiKey: e.target.value })}
+                    style={{ paddingRight: '32px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomKey(!showCustomKey)}
+                    className="icon-button"
+                    style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)' }}
+                  >
+                    {showCustomKey ? <EyeOff size={13} /> : <Eye size={13} />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                className="btn btn-secondary"
+                disabled={testing}
+                onClick={() => handleTest('custom')}
+                title="Test custom endpoint connection"
+              >
+                <Activity size={13} className={testing ? 'spinner' : ''} />
+                {testing ? 'Testing Custom Endpoint...' : 'Test Connection'}
+              </button>
+            </div>
+          )}
+
+          {activeTab === 'backend' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                Keep your API secrets 100% off Chrome extension storage by routing requests through a local Node.js proxy server.
+              </div>
+
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontWeight: 600
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={formData.localBackend?.enabled || false}
@@ -234,127 +394,178 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     setFormData({
                       ...formData,
                       localBackend: {
-                        ...(formData.localBackend || { baseUrl: 'http://localhost:3001' }),
+                        ...(formData.localBackend || { url: 'http://localhost:3001' }),
                         enabled: e.target.checked
                       }
                     })
                   }
                 />
-                <span style={{ fontWeight: 600 }}>Enable Local Backend Proxy</span>
+                Route API calls through Local Backend Server
               </label>
 
               <div className="form-group">
-                <label className="form-label">Local Proxy Server URL</label>
+                <label className="form-label">Local Backend URL</label>
                 <input
                   type="text"
                   className="text-input"
-                  value={formData.localBackend?.baseUrl || 'http://localhost:3001'}
+                  placeholder="http://localhost:3001"
+                  value={formData.localBackend?.url || 'http://localhost:3001'}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
                       localBackend: {
                         ...(formData.localBackend || { enabled: false }),
-                        baseUrl: e.target.value
+                        url: e.target.value
                       }
                     })
                   }
                 />
               </div>
 
-              <div style={{ background: '#090b10', padding: '8px', borderRadius: '6px', fontSize: '11px', fontFamily: 'monospace' }}>
-                Run server: <strong>npm run server</strong><br/>
-                Reads: <strong>.env (GEMINI_API_KEY, OPENAI_API_KEY)</strong>
-              </div>
+              <button
+                className="btn btn-secondary"
+                disabled={testing}
+                onClick={async () => {
+                  setTesting(true);
+                  setTestResult(null);
+                  try {
+                    const url = (formData.localBackend?.url || 'http://localhost:3001').replace(/\/+$/, '');
+                    const res = await fetch(`${url}/health`);
+                    if (res.ok) {
+                      const data = await res.json();
+                      setTestResult({
+                        success: true,
+                        message: `Local server online: ${data.message || 'Healthy'}`
+                      });
+                    } else {
+                      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                    }
+                  } catch (e: any) {
+                    setTestResult({
+                      success: false,
+                      message: `Could not reach local server: ${e.message}. Start it via: npm run server`
+                    });
+                  } finally {
+                    setTesting(false);
+                  }
+                }}
+                title="Verify local server health check"
+              >
+                <Activity size={13} className={testing ? 'spinner' : ''} />
+                {testing ? 'Pinging Local Server...' : 'Test Local Server (/health)'}
+              </button>
             </div>
           )}
 
           {activeTab === 'safeguards' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                Configure spending caps and alerts to prevent unexpected API costs.
-              </div>
-
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="form-group">
+                <label className="form-label">Daily Request Cap (0 = Unlimited)</label>
                 <input
-                  type="checkbox"
-                  checked={formData.safeguards?.enabled ?? true}
+                  type="number"
+                  min="0"
+                  max="1000"
+                  className="text-input"
+                  value={formData.safeguards?.dailyRequestCap || 50}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
                       safeguards: {
-                        ...(formData.safeguards || { maxRequestsPerDay: 50, warnBeforeReasoningModels: true }),
-                        enabled: e.target.checked
+                        ...(formData.safeguards || { alertOnReasoningModels: true, maxOutputTokens: 4096 }),
+                        dailyRequestCap: parseInt(e.target.value, 10) || 0
                       }
                     })
                   }
                 />
-                <span style={{ fontWeight: 600 }}>Enable Daily Request Safeguard</span>
+              </div>
+
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  fontSize: '12px'
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={formData.safeguards?.alertOnReasoningModels !== false}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      safeguards: {
+                        ...(formData.safeguards || { dailyRequestCap: 50, maxOutputTokens: 4096 }),
+                        alertOnReasoningModels: e.target.checked
+                      }
+                    })
+                  }
+                />
+                Confirm before querying expensive reasoning models (GPT-6.1 Sol, Gemini 4 Argon)
               </label>
 
               <div className="form-group">
-                <label className="form-label">Max Requests per 24 Hours</label>
+                <label className="form-label">Max Output Tokens</label>
                 <input
                   type="number"
+                  min="512"
+                  max="16384"
+                  step="512"
                   className="text-input"
-                  min={5}
-                  max={500}
-                  value={formData.safeguards?.maxRequestsPerDay || 50}
+                  value={formData.safeguards?.maxOutputTokens || 4096}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
                       safeguards: {
-                        ...(formData.safeguards || { enabled: true, warnBeforeReasoningModels: true }),
-                        maxRequestsPerDay: parseInt(e.target.value) || 50
+                        ...(formData.safeguards || { dailyRequestCap: 50, alertOnReasoningModels: true }),
+                        maxOutputTokens: parseInt(e.target.value, 10) || 4096
                       }
                     })
                   }
                 />
               </div>
-
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
-                <input
-                  type="checkbox"
-                  checked={formData.safeguards?.warnBeforeReasoningModels ?? true}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      safeguards: {
-                        ...(formData.safeguards || { enabled: true, maxRequestsPerDay: 50 }),
-                        warnBeforeReasoningModels: e.target.checked
-                      }
-                    })
-                  }
-                />
-                <span>Warn before using heavy reasoning models (Gemini 4 Argon, GPT-6.1 Sol)</span>
-              </label>
-
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
-                <input
-                  type="checkbox"
-                  checked={formData.confirmBeforeOverwrite}
-                  onChange={(e) => setFormData({ ...formData, confirmBeforeOverwrite: e.target.checked })}
-                />
-                <span>Confirm before overwriting existing editor code</span>
-              </label>
             </div>
           )}
 
           {activeTab === 'usage' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '240px', overflowY: 'auto' }}>
-              <div style={{ fontSize: '12px', fontWeight: 600 }}>
-                Recent Activity & Diagnostics
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                  {formData.usageHistory?.length || 0} calls recorded
+                </span>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={handleExportLogs}
+                    style={{ fontSize: '10px', padding: '3px 6px' }}
+                    title="Export usage history as JSON"
+                  >
+                    <Download size={10} />
+                    Export
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={handleClearLogs}
+                    style={{ fontSize: '10px', padding: '3px 6px', color: 'var(--error-color)' }}
+                    title="Clear usage history"
+                  >
+                    <Trash2 size={10} />
+                    Clear
+                  </button>
+                </div>
               </div>
-              {(!formData.usageRecords || formData.usageRecords.length === 0) ? (
-                <div style={{ color: 'var(--text-muted)', fontSize: '11px', textAlign: 'center', padding: '16px' }}>
-                  No requests recorded yet.
+
+              {(!formData.usageHistory || formData.usageHistory.length === 0) ? (
+                <div style={{ color: 'var(--text-muted)', fontSize: '11px', textAlign: 'center', padding: '16px 0' }}>
+                  No usage records yet. Run your first solve to see latency and telemetry.
                 </div>
               ) : (
-                formData.usageRecords.slice(0, 15).map((rec, i) => (
+                formData.usageHistory.slice(-5).reverse().map((rec) => (
                   <div
-                    key={rec.id || i}
+                    key={rec.id}
                     style={{
                       background: 'var(--bg-tertiary)',
-                      padding: '6px 8px',
+                      padding: '8px',
                       borderRadius: '4px',
                       fontSize: '11px',
                       display: 'flex',
@@ -363,10 +574,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     }}
                   >
                     <div>
-                      <strong>{rec.provider.toUpperCase()}</strong>: {rec.model} ({rec.action})
-                      {rec.error && <div style={{ color: 'var(--error-color)' }}>{rec.error}</div>}
+                      <strong>{rec.model}</strong> ({rec.action})
+                      <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>
+                        {new Date(rec.timestamp).toLocaleTimeString()}
+                      </div>
                     </div>
-                    <div style={{ textAlign: 'right', color: rec.success ? 'var(--success-color)' : 'var(--error-color)' }}>
+                    <div style={{ color: rec.success ? 'var(--success-color)' : 'var(--error-color)', fontWeight: 600 }}>
                       {rec.success ? `${rec.latencyMs}ms` : 'Failed'}
                     </div>
                   </div>
@@ -378,24 +591,36 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {testResult && (
             <div
               className={`status-banner ${testResult.success ? 'success' : 'error'}`}
-              style={{ marginTop: '4px' }}
+              style={{ marginTop: '10px' }}
             >
               {testResult.success ? <Check size={14} /> : <ShieldAlert size={14} />}
               <div>
-                <strong>{testResult.success ? 'Connected!' : 'Connection Failed:'}</strong>{' '}
-                {testResult.message}
+                <strong>{testResult.success ? 'Connected!' : 'Notice:'}</strong> {testResult.message}
               </div>
             </div>
           )}
         </div>
 
-        <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onClose}>
-            Cancel
+        <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button
+            className="btn btn-secondary"
+            onClick={handleResetDefaults}
+            style={{ fontSize: '11px', color: 'var(--text-muted)' }}
+            title="Reset to recommended factory settings"
+          >
+            <RotateCcw size={11} />
+            Reset Defaults
           </button>
-          <button className="btn btn-primary" onClick={handleSaveAndClose}>
-            Save Changes
-          </button>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="btn btn-secondary" onClick={onClose} title="Cancel without saving">
+              Cancel
+            </button>
+            <button className="btn btn-primary" onClick={handleSaveAndClose} title="Save changes and close">
+              {savedSuccess ? <Check size={13} color="#fff" /> : null}
+              {savedSuccess ? 'Saved!' : 'Save Changes'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
