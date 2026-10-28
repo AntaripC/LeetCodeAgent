@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, ListPlus, Terminal } from 'lucide-react';
+import { Settings, BookmarkPlus, Sparkles, CheckCircle2 } from 'lucide-react';
 
 interface HeaderProps {
   isLeetCode: boolean;
@@ -19,23 +19,24 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="header">
       <div className="header-left">
-        <div className="logo-badge" title="LeetCode AI Copilot">
-          <Terminal size={16} />
+        <div className="logo-badge" title="LeetCode Copilot Pro">
+          <Sparkles size={15} />
         </div>
         <div className="title-area">
-          <h1>LeetCode Copilot</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <h1>LeetCode Copilot</h1>
+            <span className="pro-badge">PRO</span>
+          </div>
           <div className="status-pill">
             <span
-              className={`status-dot ${isLeetCode ? (isConfigured ? 'active' : 'warning') : 'inactive'}`}
+              className={`status-dot ${isLeetCode ? (isConfigured ? 'active' : 'ready') : 'inactive'}`}
             />
             <span>
               {!isLeetCode
-                ? 'Not on LeetCode'
+                ? 'Standby (Open LeetCode)'
                 : isConfigured
-                ? `${providerName} Ready`
-                : providerName.includes('CodeMind')
-                ? 'CodeMind Offline'
-                : `${providerName} Key Needed`}
+                ? `${providerName.replace(/\(.*\)/, '').trim()} Active`
+                : 'Engine Ready'}
             </span>
           </div>
         </div>
@@ -45,14 +46,14 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           className="icon-button"
           onClick={onOpenImport}
-          title="Import Problem List (JSON/CSV)"
+          title="Problem Library & Batch Imports"
         >
-          <ListPlus size={15} />
+          <BookmarkPlus size={15} />
         </button>
         <button
           className="icon-button"
           onClick={onOpenSettings}
-          title="Settings & API Keys"
+          title="Copilot Preferences"
         >
           <Settings size={15} />
         </button>

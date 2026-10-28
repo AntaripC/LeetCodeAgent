@@ -10,18 +10,22 @@ export class ResponseValidator {
       throw new Error('AI returned an empty response');
     }
 
-    const trimmed = rawText.trim();
+    // Strip internal reasoning tokens from frontier models (<think>...</think> or <thought>...</thought>)
+    let text = rawText
+      .replace(/<think>[\s\S]*?<\/think>/gi, '')
+      .replace(/<thought>[\s\S]*?<\/thought>/gi, '')
+      .trim();
 
     // 1. Direct parse attempt
     try {
-      return JSON.parse(trimmed);
+      return JSON.parse(text);
     } catch {
       // Continue to regex extraction
     }
 
     // 2. Extract ```json ... ``` code fence
     const jsonFenceRegex = /```(?:json)?\s*([\s\S]*?)\s*```/i;
-    const fenceMatch = trimmed.match(jsonFenceRegex);
+    const fenceMatch = text.match(jsonFenceRegex);
     if (fenceMatch && fenceMatch[1]) {
       try {
         return JSON.parse(fenceMatch[1].trim());
@@ -31,14 +35,14 @@ export class ResponseValidator {
     }
 
     // 3. Find outermost curly braces { ... }
-    const firstBrace = trimmed.indexOf('{');
-    const lastBrace = trimmed.lastIndexOf('}');
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
     if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-      const candidate = trimmed.substring(firstBrace, lastBrace + 1);
+      const candidate = text.substring(firstBrace, lastBrace + 1);
       try {
         return JSON.parse(candidate);
       } catch (err: any) {
-        // Try simple cleaning of escaped backslashes or trailing commas
+        // Try cleaning trailing commas, control characters, or unescaped newlines
         try {
           const cleaned = candidate
             .replace(/,\s*([}\]])/g, '$1') // remove trailing commas
@@ -103,12 +107,25 @@ export class ResponseValidator {
       };
     }
 
+    // Normalize code field in case smaller local models return an array of lines or an object keyed by language
+    let rawCode = parsed.code;
+    if (Array.isArray(rawCode)) {
+      rawCode = rawCode.join('\n');
+    } else if (rawCode && typeof rawCode === 'object') {
+      const firstVal = Object.values(rawCode)[0];
+      if (Array.isArray(firstVal)) {
+        rawCode = firstVal.join('\n');
+      } else if (typeof firstVal === 'string') {
+        rawCode = firstVal;
+      }
+    }
+
     // Check mandatory fields
-    if (!parsed.code || typeof parsed.code !== 'string' || !parsed.code.trim()) {
+    if (!rawCode || typeof rawCode !== 'string' || !rawCode.trim()) {
       errors.push('AI response is missing the "code" field or it is empty');
     }
 
-    const sanitizedCode = this.sanitizeCode(parsed.code || '');
+    const sanitizedCode = this.sanitizeCode(rawCode || '');
 
     // Check code hygiene
     const targetLang = parsed.language || expectedLanguage || 'python3';

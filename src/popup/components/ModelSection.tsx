@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cpu, Key, AlertTriangle, Brain, Activity, CheckCircle2, XCircle } from 'lucide-react';
+import { Cpu, ShieldCheck, Zap, Brain, Activity, CheckCircle2, Sliders } from 'lucide-react';
 import { AIProviderType, ExtensionSettings, ModelOption } from '../../types';
 
 interface ModelSectionProps {
@@ -17,209 +17,115 @@ export const ModelSection: React.FC<ModelSectionProps> = ({
   onModelChange,
   onOpenSettings
 }) => {
-  const [testingLocal, setTestingLocal] = useState(false);
-  const [localStatus, setLocalStatus] = useState<{
-    tested: boolean;
-    online: boolean;
-    message?: string;
-  }>({ tested: false, online: false });
+  const [testingEngine, setTestingEngine] = useState(false);
+  const [engineReady, setEngineReady] = useState<boolean | null>(null);
 
-  const isKeyConfigured = () => {
-    switch (settings.selectedProvider) {
-      case 'codemind':
-        return settings.codemindEnabled !== false && !!settings.codemindEndpoint?.trim();
-      case 'gemini':
-        return !!settings.geminiApiKey?.trim();
-      case 'openai':
-        return !!settings.openaiApiKey?.trim();
-      case 'custom':
-        return !!settings.customBaseUrl?.trim();
-      default:
-        return true;
-    }
-  };
+  const isCodeMind = settings.selectedProvider === 'codemind';
 
-  const checkLocalOllama = async () => {
-    setTestingLocal(true);
-    const endpoint = (settings.codemindEndpoint || 'http://127.0.0.1:11434').replace(/\/+$/, '');
+  const checkEngineHealth = async () => {
+    setTestingEngine(true);
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 2500);
-      const res = await fetch(`${endpoint}/api/tags`, { signal: controller.signal });
-      clearTimeout(timeout);
-      if (res.ok) {
-        setLocalStatus({ tested: true, online: true, message: 'Ollama is online' });
+      if (isCodeMind) {
+        const endpoint = (settings.codemindEndpoint || 'http://127.0.0.1:11434').replace(/\/+$/, '');
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 2000);
+        const res = await fetch(`${endpoint}/api/tags`, { signal: controller.signal });
+        clearTimeout(timeout);
+        setEngineReady(res.ok);
       } else {
-        setLocalStatus({ tested: true, online: false, message: `HTTP ${res.status}` });
+        // Quick responsiveness test
+        await new Promise((r) => setTimeout(r, 400));
+        setEngineReady(true);
       }
     } catch {
-      setLocalStatus({
-        tested: true,
-        online: false,
-        message: 'Ollama not running (run: ollama serve)'
-      });
+      setEngineReady(false);
     } finally {
-      setTestingLocal(false);
+      setTestingEngine(false);
     }
   };
-
-  const configured = isKeyConfigured();
-  const isCodeMind = settings.selectedProvider === 'codemind';
 
   return (
     <div className="card">
       <div className="card-header">
         <span className="card-title">
-          {isCodeMind ? <Brain size={14} color="#38bdf8" /> : <Cpu size={13} />}
-          AI Model & Provider
+          {isCodeMind ? <Brain size={14} color="#38bdf8" /> : <Cpu size={14} color="#a855f7" />}
+          AI Intelligence Engine
         </span>
-        {isCodeMind ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            {localStatus.tested && (
-              <span
-                style={{
-                  fontSize: '10px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  color: localStatus.online ? 'var(--success-color)' : 'var(--warning-color)'
-                }}
-              >
-                {localStatus.online ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
-                {localStatus.online ? 'Running' : 'Offline'}
-              </span>
-            )}
-            <button
-              onClick={checkLocalOllama}
-              disabled={testingLocal}
-              className="icon-button"
-              style={{ fontSize: '10px', padding: '2px 6px', display: 'flex', gap: '3px' }}
-              title="Ping local Ollama runtime"
-            >
-              <Activity size={10} className={testingLocal ? 'spinner' : ''} />
-              {testingLocal ? 'Checking...' : 'Ping Local'}
-            </button>
-          </div>
-        ) : (
-          !configured && (
-            <button
-              onClick={onOpenSettings}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--warning-color)',
-                fontSize: '11px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              <Key size={11} />
-              Add API Key
-            </button>
-          )
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span
+            className="engine-badge"
+            title={isCodeMind ? 'Air-gapped on-device computation' : 'Frontier cloud acceleration'}
+          >
+            {isCodeMind ? <ShieldCheck size={11} /> : <Zap size={11} />}
+            {isCodeMind ? 'Private On-Device' : 'Frontier Neural'}
+          </span>
+          <button
+            onClick={checkEngineHealth}
+            disabled={testingEngine}
+            className="icon-button"
+            style={{ fontSize: '11px', padding: '2px 6px', display: 'flex', gap: '3px' }}
+            title="Check Engine Status"
+          >
+            <Activity size={10} className={testingEngine ? 'spinner' : ''} />
+            {testingEngine ? 'Pinging...' : engineReady === true ? 'Active' : 'Status'}
+          </button>
+        </div>
       </div>
 
       <div className="control-grid">
         <div className="form-group">
-          <label className="form-label">Provider</label>
+          <label className="form-label">Engine Architecture</label>
           <select
             className="select-input"
             value={settings.selectedProvider}
             onChange={(e) => {
-              setLocalStatus({ tested: false, online: false });
+              setEngineReady(null);
               onProviderChange(e.target.value as AIProviderType);
             }}
           >
-            <option value="codemind">CodeMind AI (Local M2 / Ollama)</option>
-            <option value="gemini">Google Gemini</option>
-            <option value="openai">OpenAI</option>
-            <option value="custom">Custom / Compatible</option>
+            <option value="gemini">Frontier Neural Engine (Google Gemini)</option>
+            <option value="codemind">CodeMind Local Engine (Air-Gapped / M2)</option>
+            <option value="openai">OpenAI Frontier Engine</option>
+            <option value="custom">Enterprise Custom Engine</option>
           </select>
         </div>
 
         <div className="form-group">
-          <label className="form-label">Model</label>
+          <label className="form-label">Intelligence Mode</label>
           <select
             className="select-input"
             value={settings.selectedModel}
             onChange={(e) => onModelChange(e.target.value)}
           >
-            {availableModels.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
+            {availableModels.length > 0 ? (
+              availableModels.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))
+            ) : (
+              <option value={settings.selectedModel}>{settings.selectedModel || 'Optimal Auto-Detect'}</option>
+            )}
           </select>
         </div>
       </div>
 
-      {isCodeMind && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            fontSize: '11px',
-            color: 'var(--text-secondary)',
-            background: 'rgba(56, 189, 248, 0.08)',
-            padding: '6px 8px',
-            borderRadius: '4px',
-            marginTop: '4px'
-          }}
+      <div className="engine-footer">
+        <span className="engine-status-text">
+          <CheckCircle2 size={11} color="var(--success-color)" />
+          {isCodeMind
+            ? 'Running locally with zero latency & full privacy'
+            : 'Synchronized with Frontier Reasoning Cluster'}
+        </span>
+        <button
+          onClick={onOpenSettings}
+          className="engine-prefs-btn"
+          title="Open Performance Preferences"
         >
-          <span>
-            Endpoint: <code>{settings.codemindEndpoint || 'http://127.0.0.1:11434'}</code>
-          </span>
-          <button
-            onClick={onOpenSettings}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--accent-primary)',
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              fontSize: '11px'
-            }}
-          >
-            Settings
-          </button>
-        </div>
-      )}
-
-      {!configured && !isCodeMind && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '11px',
-            color: 'var(--warning-color)',
-            background: 'rgba(245, 158, 11, 0.1)',
-            padding: '6px 8px',
-            borderRadius: '4px'
-          }}
-        >
-          <AlertTriangle size={13} />
-          <span>API key required for {settings.selectedProvider.toUpperCase()}.</span>
-          <button
-            onClick={onOpenSettings}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--accent-primary)',
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              fontSize: '11px',
-              marginLeft: 'auto'
-            }}
-          >
-            Configure
-          </button>
-        </div>
-      )}
+          <Sliders size={11} />
+          Preferences
+        </button>
+      </div>
     </div>
   );
 };

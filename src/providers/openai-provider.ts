@@ -14,11 +14,12 @@ export class OpenAIProvider implements IAIProvider {
   readonly name = 'OpenAI';
 
   private static DEFAULT_MODELS: ModelOption[] = [
-    { id: 'gpt-6-astra', name: 'GPT-6 Astra (Latest Frontier Coding & Intelligence)', isDefault: true, isFrontierReasoning: true },
-    { id: 'gpt-6.1-sol', name: 'GPT-6.1 Sol (Next-Gen Deep Reasoning)', isFrontierReasoning: true },
-    { id: 'gpt-4o', name: 'GPT-4o (High Intelligence)' },
+    { id: 'o3-mini', name: 'o3-mini (Frontier Competitive Programming & Reasoning)', isDefault: true, isFrontierReasoning: true },
+    { id: 'o1', name: 'o1 (Deep Reasoning)', isFrontierReasoning: true },
+    { id: 'gpt-4o', name: 'GPT-4o (High Intelligence & Multimodal)' },
     { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Fast & Efficient)' },
-    { id: 'o3-mini', name: 'o3-mini (Advanced Reasoning)', isFrontierReasoning: true }
+    { id: 'gpt-6-astra', name: 'GPT-6 Astra (Frontier Coding Alias)', isFrontierReasoning: true },
+    { id: 'gpt-6.1-sol', name: 'GPT-6.1 Sol (Next-Gen Deep Reasoning)', isFrontierReasoning: true }
   ];
 
   resolveModel(settings: ExtensionSettings): string {
@@ -26,7 +27,7 @@ export class OpenAIProvider implements IAIProvider {
       settings.openaiCustomModel?.trim() ||
       settings.selectedModel?.trim() ||
       settings.openaiModel?.trim() ||
-      'gpt-6-astra'
+      'o3-mini'
     );
   }
 
@@ -232,13 +233,13 @@ export class OpenAIProvider implements IAIProvider {
     const bodyPayload: any = {
       model,
       messages: [
-        { role: 'system', content: systemInstruction },
+        { role: isReasoningModel ? 'developer' : 'system', content: systemInstruction },
         { role: 'user', content: userPrompt }
       ]
     };
 
     if (!isReasoningModel) {
-      bodyPayload.temperature = 0.2;
+      bodyPayload.temperature = 0.1;
       bodyPayload.response_format = { type: 'json_object' };
     }
 

@@ -51,15 +51,22 @@ async function handleGenerate(body) {
     if (!apiKey) {
       throw new Error('GEMINI_API_KEY is not set on the local server or environment. Add GEMINI_API_KEY to your .env file.');
     }
-    const cleanModel = (model || 'gemini-4-argon').replace(/^models\//, '');
+    const cleanModel = (model || 'gemini-2.5-pro').replace(/^models\//, '');
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-    const systemPrompt = `You are an elite competitive programmer and algorithms architect.
-Output strictly formatted JSON matching this exact schema:
+    const systemPrompt = `You are a world-class competitive programmer, algorithms expert, and LeetCode master.
+Your goal is to provide accurate, clean, production-grade solutions strictly formatted as a JSON object.
+
+CRITICAL RULES:
+1. OPTIMAL COMPLEXITY: Derive mathematically optimal Big-O based on constraints (no TLE).
+2. ZERO GLOBAL STATE: LeetCode runs multiple tests in one process; never use global/static variables or mutable default parameters.
+3. LANGUAGE HYGIENE: In C++/Java use 64-bit integers (long long/long) for large sums; in Python handle deep recursion or use iterative logic; in JS use BigInt when needed.
+4. DRY RUN: Verify boundary checks (< vs <=, 0-indexing) against sample test cases before outputting code.
+5. SIGNATURE: Match the exact LeetCode class Solution and method signatures. Return ONLY raw JSON matching this schema:
 {
   "problemSummary": "Summary",
-  "algorithm": "Detailed intuition",
-  "correctness": "Proof",
+  "algorithm": "Detailed intuition and dry-run trace",
+  "correctness": "Proof of invariants",
   "code": "Ready-to-run solution code",
   "language": "${request.targetLanguage}",
   "timeComplexity": "O(...)",
@@ -87,7 +94,7 @@ Action: ${request.action}`;
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt }] },
         contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-        generationConfig: { temperature: 0.2, responseMimeType: 'application/json' }
+        generationConfig: { temperature: 0.1, responseMimeType: 'application/json' }
       })
     });
 
@@ -110,14 +117,22 @@ Action: ${request.action}`;
     if (!apiKey) {
       throw new Error('OPENAI_API_KEY is not set on the local server or environment. Add OPENAI_API_KEY to your .env file.');
     }
-    const cleanModel = model || 'gpt-6-astra';
+    const cleanModel = model || 'o3-mini';
+    const isReasoning = cleanModel.startsWith('o1') || cleanModel.startsWith('o3') || cleanModel.includes('sol');
 
-    const systemPrompt = `You are an elite competitive programmer and algorithms architect.
-Output strictly formatted JSON matching this exact schema:
+    const systemPrompt = `You are a world-class competitive programmer, algorithms expert, and LeetCode master.
+Your goal is to provide accurate, clean, production-grade solutions strictly formatted as a JSON object.
+
+CRITICAL RULES:
+1. OPTIMAL COMPLEXITY: Derive mathematically optimal Big-O based on constraints (no TLE).
+2. ZERO GLOBAL STATE: LeetCode runs multiple tests in one process; never use global/static variables or mutable default parameters.
+3. LANGUAGE HYGIENE: In C++/Java use 64-bit integers (long long/long) for large sums; in Python handle deep recursion or use iterative logic; in JS use BigInt when needed.
+4. DRY RUN: Verify boundary checks (< vs <=, 0-indexing) against sample test cases before outputting code.
+5. SIGNATURE: Match the exact LeetCode class Solution and method signatures. Return ONLY raw JSON matching this schema:
 {
   "problemSummary": "Summary",
-  "algorithm": "Detailed intuition",
-  "correctness": "Proof",
+  "algorithm": "Detailed intuition and dry-run trace",
+  "correctness": "Proof of invariants",
   "code": "Ready-to-run solution code",
   "language": "${request.targetLanguage}",
   "timeComplexity": "O(...)",
@@ -139,21 +154,26 @@ ${request.problem.starterCode || ''}
 
 Action: ${request.action}`;
 
+    const payload = {
+      model: cleanModel,
+      messages: [
+        { role: isReasoning ? 'developer' : 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ]
+    };
+
+    if (!isReasoning) {
+      payload.temperature = 0.1;
+      payload.response_format = { type: 'json_object' };
+    }
+
     const resp = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`
       },
-      body: JSON.stringify({
-        model: cleanModel,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.2,
-        response_format: { type: 'json_object' }
-      })
+      body: JSON.stringify(payload)
     });
 
     if (!resp.ok) {

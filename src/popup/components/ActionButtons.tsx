@@ -46,9 +46,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   const getActionTooltip = (action: SolverActionType) => {
     if (isGenerating) return 'Currently generating solution...';
     if (!isConfigured)
-      return providerName.includes('CodeMind')
-        ? 'Click to configure CodeMind AI local endpoint in Settings'
-        : `Click to configure ${providerName} API key in Settings`;
+      return 'Click to review AI Engine status in Preferences';
     if (!hasProblem) return 'Click to load demo problem (1. Two Sum) and solve';
     switch (action) {
       case 'solve':
@@ -76,16 +74,14 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
       >
         <Sparkles size={16} className={isGenerating && currentAction === 'solve' ? 'spinner' : ''} />
         {isGenerating && currentAction === 'solve'
-          ? 'Solving with AI...'
+          ? 'Synthesizing Solution...'
           : !isConfigured
-          ? providerName.includes('CodeMind')
-            ? 'Configure CodeMind AI'
-            : `Configure ${providerName} Key to Solve`
+          ? 'Initialize AI Engine'
           : !hasProblem
           ? 'Load Demo Problem & Solve'
           : hasExistingSolution
           ? 'Regenerate Optimal Solution'
-          : 'Solve with AI'}
+          : 'Solve Problem'}
       </button>
 
       <div className="action-chips-row">

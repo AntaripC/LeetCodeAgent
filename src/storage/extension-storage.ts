@@ -36,14 +36,14 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   codemindCustomModel: '',
   codemindTimeoutSeconds: 60,
   codemindMaxTokens: 4096,
-  codemindTemperature: 0.2,
+  codemindTemperature: 0.1,
 
   geminiApiKey: '',
   geminiModel: 'gemini-4-argon',
   geminiCustomModel: '',
 
   openaiApiKey: '',
-  openaiModel: 'gpt-6-astra',
+  openaiModel: 'o3-mini',
   openaiBaseUrl: 'https://api.openai.com/v1',
   openaiCustomModel: '',
 

@@ -285,8 +285,64 @@ export class CodeMindProvider implements IAIProvider {
 
       if (!resp.ok) {
         if (resp.status === 404) {
+          // Attempt automatic discovery of any locally installed Ollama models
+          try {
+            const tagsResp = await fetch(`${endpoint}/api/tags`);
+            if (tagsResp.ok) {
+              const tagsData = await tagsResp.json();
+              if (Array.isArray(tagsData.models) && tagsData.models.length > 0) {
+                // Find a preferred coding model or the first available installed model
+                const installedNames: string[] = tagsData.models.map((m: any) => m.name || m.model);
+                const fallbackModel =
+                  installedNames.find((name: string) => name.includes('coder') || name.includes('qwen') || name.includes('deepseek')) ||
+                  installedNames[0];
+
+                if (fallbackModel && fallbackModel !== model) {
+                  // Silently create the codemind-ai alias in Ollama for subsequent calls
+                  fetch(`${endpoint}/api/copy`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ source: fallbackModel, destination: 'codemind-ai' })
+                  }).catch(() => {});
+
+                  // Retry generation with the available installed model
+                  const retryResp = await fetch(`${endpoint}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      model: fallbackModel,
+                      messages: [
+                        { role: 'system', content: systemInstruction },
+                        { role: 'user', content: userPrompt }
+                      ],
+                      format: 'json',
+                      stream: false,
+                      options: {
+                        temperature,
+                        num_predict: maxTokens
+                      }
+                    })
+                  });
+
+                  if (retryResp.ok) {
+                    const retryData = await retryResp.json();
+                    const retryContent = retryData.message?.content;
+                    if (retryContent && retryContent.trim()) {
+                      const validation = ResponseValidator.validate(retryContent, req.targetLanguage);
+                      if (validation.isValid && validation.sanitizedResponse) {
+                        return validation.sanitizedResponse;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          } catch {
+            // Proceed to standard error
+          }
+
           throw new Error(
-            `Model "${model}" was not found in your local Ollama library. Run "ollama pull qwen2.5-coder:7b" or check the model tag in Settings.`
+            `Model "${model}" was not found in your local Ollama library. Run "ollama pull qwen2.5-coder:1.5b" or "ollama pull qwen2.5-coder:7b" in Terminal or select an installed model in Settings.`
           );
         }
         if (resp.status === 403) {
