@@ -165,6 +165,14 @@ export class CodeMindProvider implements IAIProvider {
       const latencyMs = Date.now() - startTime;
 
       if (!resp.ok) {
+        if (resp.status === 403) {
+          return {
+            success: false,
+            message: `Ollama is running, but blocked browser extension access (HTTP 403 Forbidden).`,
+            instructionHint: `To allow browser extensions to connect to Ollama on macOS:\n1. Run in Terminal: launchctl setenv OLLAMA_ORIGINS "*"\n2. Restart the Ollama app (Quit from menu bar, then re-open).\n(Or start in Terminal via: OLLAMA_ORIGINS="*" ollama serve)`,
+            latencyMs
+          };
+        }
         return {
           success: false,
           message: `Local endpoint responded with HTTP ${resp.status}`,
@@ -279,6 +287,11 @@ export class CodeMindProvider implements IAIProvider {
         if (resp.status === 404) {
           throw new Error(
             `Model "${model}" was not found in your local Ollama library. Run "ollama pull qwen2.5-coder:7b" or check the model tag in Settings.`
+          );
+        }
+        if (resp.status === 403) {
+          throw new Error(
+            `Ollama blocked browser extension access (HTTP 403 Forbidden). On macOS, allow browser extension access by running: "launchctl setenv OLLAMA_ORIGINS '*'" in Terminal and restarting the Ollama app (or run: "OLLAMA_ORIGINS='*' ollama serve").`
           );
         }
         const errorText = await resp.text();

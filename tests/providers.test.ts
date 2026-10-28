@@ -170,6 +170,21 @@ describe('AI Providers', () => {
         /not found in your local Ollama library/i
       );
     });
+
+    it('should report actionable error on HTTP 403 origin rejection', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+        text: async () => 'Forbidden'
+      });
+      await expect(codemind.generate(dummyRequest, DEFAULT_SETTINGS)).rejects.toThrow(
+        /OLLAMA_ORIGINS/i
+      );
+
+      const testRes = await codemind.testConnection(DEFAULT_SETTINGS);
+      expect(testRes.success).toBe(false);
+      expect(testRes.instructionHint).toContain('OLLAMA_ORIGINS');
+    });
   });
 
   describe('GeminiProvider', () => {
