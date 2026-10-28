@@ -45,7 +45,10 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
 
   const getActionTooltip = (action: SolverActionType) => {
     if (isGenerating) return 'Currently generating solution...';
-    if (!isConfigured) return `Click to configure ${providerName} API key in Settings`;
+    if (!isConfigured)
+      return providerName.includes('CodeMind')
+        ? 'Click to configure CodeMind AI local endpoint in Settings'
+        : `Click to configure ${providerName} API key in Settings`;
     if (!hasProblem) return 'Click to load demo problem (1. Two Sum) and solve';
     switch (action) {
       case 'solve':
@@ -75,7 +78,9 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
         {isGenerating && currentAction === 'solve'
           ? 'Solving with AI...'
           : !isConfigured
-          ? `Configure ${providerName} Key to Solve`
+          ? providerName.includes('CodeMind')
+            ? 'Configure CodeMind AI'
+            : `Configure ${providerName} Key to Solve`
           : !hasProblem
           ? 'Load Demo Problem & Solve'
           : hasExistingSolution

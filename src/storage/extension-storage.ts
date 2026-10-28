@@ -29,6 +29,15 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   usageRecords: [],
   connectionStatus: {},
 
+  // CodeMind AI Default Configuration (Local Ollama on MacBook Air M2)
+  codemindEnabled: true,
+  codemindEndpoint: 'http://127.0.0.1:11434',
+  codemindModel: 'codemind-ai',
+  codemindCustomModel: '',
+  codemindTimeoutSeconds: 60,
+  codemindMaxTokens: 4096,
+  codemindTemperature: 0.2,
+
   geminiApiKey: '',
   geminiModel: 'gemini-4-argon',
   geminiCustomModel: '',

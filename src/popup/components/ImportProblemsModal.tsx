@@ -114,7 +114,8 @@ export const ImportProblemsModal: React.FC<ImportProblemsModalProps> = ({
         examples: [],
         constraints: [],
         starterCode: '',
-        editorLanguage: 'python3'
+        editorLanguage: 'python3',
+        detectedAt: Date.now()
       };
       onSelectProblem(context);
       onClose();

@@ -14,13 +14,14 @@
 3. [Installation of Project Dependencies](#2-install-project-dependencies)
 4. [Building the Extension](#3-build-the-extension)
 5. [Loading the Unpacked Extension into Chrome](#4-load-the-unpacked-extension-into-chrome)
-6. [Configuring API Keys](#5-configuring-api-keys)
-7. [How to Use on LeetCode](#6-how-to-use-on-leetcode)
-8. [Inserting Code into the Editor](#7-inserting-code-into-the-editor)
-9. [Supported Programming Languages](#8-supported-programming-languages)
-10. [Troubleshooting & Diagnostics](#9-troubleshooting--diagnostics)
-11. [Adding a New AI Provider](#10-how-to-add-another-ai-provider)
-12. [Running Automated Tests](#11-running-automated-tests)
+6. [CodeMind AI: Local & Custom Models (Ollama on M2 Mac)](#5-codemind-ai-local--custom-models-ollama-on-m2-mac)
+7. [Configuring Cloud AI Providers (Gemini & OpenAI)](#6-configuring-cloud-ai-providers-gemini--openai)
+8. [How to Use on LeetCode](#7-how-to-use-on-leetcode)
+9. [Inserting Code into the Editor](#8-inserting-code-into-the-editor)
+10. [Supported Programming Languages](#9-supported-programming-languages)
+11. [Troubleshooting & Diagnostics](#10-troubleshooting--diagnostics)
+12. [Adding a New AI Provider](#11-how-to-add-another-ai-provider)
+13. [Running Automated Tests](#12-running-automated-tests)
 
 ---
 
@@ -28,10 +29,12 @@
 
 - **Direct LeetCode Integration**: Automatically reads the active problem's title, difficulty, statement, test cases, constraints, and current editor language.
 - **Resilient Fallback**: Combines modern DOM scraping with direct LeetCode GraphQL API query fallbacks if page content is loading dynamically.
-- **Multi-Model Support**:
+- **First-Class AI Providers**:
+  - **CodeMind AI (Local & Custom)**: 100% offline, private coding intelligence powered by Ollama. Optimized for Apple Silicon (M1/M2/M3/M4 with 8GB+ unified memory). Seamlessly load your own fine-tuned weights or LoRA adapters without writing code.
   - **Google Gemini**: Gemini 4 Argon (Latest Frontier Reasoning & Coding), Gemini 3.8 Flash, 2.0 Flash, 1.5 Pro.
   - **OpenAI**: GPT-6 Astra (Latest Frontier Coding & Intelligence), GPT-6.1 Sol (Next-Gen Deep Reasoning), GPT-4o, GPT-4o Mini, o3-mini.
   - **Custom / Compatible**: Any OpenAI-compatible endpoint (Ollama, Groq, DeepSeek, vLLM).
+- **Zero Internet / Air-Gapped Privacy with CodeMind**: Solve LeetCode problems completely locally without sending code or problem statements over the internet.
 - **Local Backend Proxy Option**: Run a local proxy server (`npm run server`) so API keys remain safely in your local machine environment, completely outside the browser extension bundle.
 - **Configurable Spending Safeguards**: Set 24h request limits, track latency & token counts, and configure alerts before calling heavy reasoning models.
 - **15 Programming Languages**: Full support for Python 3, C++, Java, C, C#, JavaScript, TypeScript, Go, Rust, Kotlin, Swift, PHP, Ruby, Dart, and Scala.
@@ -116,13 +119,77 @@ This compiles:
 6. The **LeetCode AI Copilot** extension card will appear in your extensions list.
 7. Click the Chrome Extensions puzzle icon in the browser toolbar and pin **LeetCode AI Copilot**.
 
+## 5. CodeMind AI: Local & Custom Models (Ollama on M2 Mac)
+
+**CodeMind AI** is a first-class local AI provider integrated directly into LeetCode AI Copilot. It operates **100% locally on your machine via Ollama**, guaranteeing total privacy and zero API costs.
+
+### A. Recommended Models for MacBook Air M2 (8GB Unified Memory)
+On an 8GB Apple Silicon machine, RAM headroom is critical. We recommend:
+1. **`qwen2.5-coder:7b`** (Recommended) — ~4.7 GB RAM footprint. Excellent algorithmic coding performance, fits comfortably in 8GB unified memory with Metal GPU acceleration.
+2. **`qwen2.5-coder:1.5b`** (Ultra-lightweight) — ~1.3 GB RAM footprint. Blazing fast, minimal memory overhead.
+
+### B. Setup Commands (Terminal)
+
+1. **Install and start Ollama**:
+   ```bash
+   # If you haven't installed Ollama yet:
+   brew install ollama
+   
+   # Start the local Ollama background service:
+   ollama serve
+   ```
+
+2. **Pull the recommended coding model**:
+   ```bash
+   ollama pull qwen2.5-coder:7b
+   ```
+
+3. **Create the `codemind-ai` model tag**:
+   ```bash
+   # Create a local alias for CodeMind AI:
+   ollama cp qwen2.5-coder:7b codemind-ai
+   ```
+
+4. **Verify Ollama is responding locally**:
+   ```bash
+   curl http://127.0.0.1:11434/api/tags
+   ```
+
+### C. Supporting Your Future Fine-Tuned Model
+
+When you train or fine-tune your own weights (e.g., QLoRA adapter or GGUF checkpoint trained on competitive programming solutions), you can load it into CodeMind AI with zero extension code changes:
+
+1. Create a `Modelfile` in your model folder:
+   ```dockerfile
+   FROM ./my-finetuned-codemind.gguf
+   # Or base model + adapter:
+   # FROM qwen2.5-coder:7b
+   # ADAPTER ./codemind-adapter.gguf
+
+   PARAMETER temperature 0.2
+   PARAMETER top_p 0.95
+   PARAMETER stop "<|im_end|>"
+   SYSTEM """You are CodeMind AI, an elite competitive programming and algorithmic reasoning assistant. Respond strictly in valid JSON matching the requested schema."""
+   ```
+
+2. Build the model into Ollama:
+   ```bash
+   ollama create codemind-ai -f Modelfile
+   ```
+
+3. Open **LeetCode AI Copilot Settings ⚙️ > CodeMind AI tab** and click **Test Local Connection**. Your custom model will be instantly detected!
+
 ---
 
-## 5. Configuring API Keys
+## 6. Configuring Cloud AI Providers (Gemini & OpenAI)
 
 1. Click the pinned **LeetCode AI Copilot** icon in your browser toolbar to open the popup.
 2. In the top right of the popup, click the **Settings (gear icon)**.
 3. Configure your desired AI provider:
+   - **CodeMind AI (Local)**:
+     - Endpoint: `http://127.0.0.1:11434`
+     - Model: `codemind-ai` (or choose detected models dynamically)
+     - Click **Test Local Connection**.
    - **Google Gemini**:
      - Grab a free API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
      - Paste your key in the **Gemini API Key** field.
@@ -131,15 +198,13 @@ This compiles:
      - Grab an API key from [OpenAI Platform](https://platform.openai.com/api-keys).
      - Paste your key in the **OpenAI API Key** field.
      - Click **Test Connection**.
-   - **Custom / Local LLM (Ollama, Groq, DeepSeek)**:
-     - Set the Base URL (e.g., `http://localhost:11434/v1` for local Ollama).
-     - Provide the model name (e.g., `llama-3.3-70b-versatile` or `deepseek-chat`).
-     - Click **Test Connection**.
+   - **Custom / Compatible**:
+     - Any external OpenAI-compatible inference gateway (vLLM, Groq, DeepSeek).
 4. Click **Save Changes**.
 
 ---
 
-## 6. How to Use on LeetCode
+## 7. How to Use on LeetCode
 
 1. Open any problem on LeetCode, for example:
    ```
@@ -162,7 +227,7 @@ This compiles:
 
 ---
 
-## 7. Inserting Code into the Editor
+## 8. Inserting Code into the Editor
 
 1. In the solution review panel, click **Insert Code**.
 2. **Overwrite Protection**: If you already have existing written code in the editor, a confirmation dialog will appear showing a snippet of your existing code. Click **Yes, Replace Code** to confirm.
@@ -172,7 +237,7 @@ This compiles:
 
 ---
 
-## 8. Supported Programming Languages
+## 9. Supported Programming Languages
 
 | Language | Identifier | Monaco ID | Aliases |
 | :--- | :--- | :--- | :--- |
@@ -194,7 +259,7 @@ This compiles:
 
 ---
 
-## 9. Troubleshooting & Diagnostics
+## 10. Troubleshooting & Diagnostics
 
 ### Problem context not detected:
 - Ensure the active tab URL begins with `https://leetcode.com/problems/` or `https://leetcode.cn/problems/`.
@@ -211,7 +276,7 @@ This compiles:
 
 ---
 
-## 10. How to Add Another AI Provider
+## 11. How to Add Another AI Provider
 
 The codebase follows an extensible Provider Pattern:
 
@@ -232,6 +297,7 @@ The codebase follows an extensible Provider Pattern:
 2. Register your provider in `src/providers/provider-factory.ts`:
    ```typescript
    private static providers = new Map<AIProviderType, IAIProvider>([
+     ['codemind', new CodeMindProvider()],
      ['gemini', new GeminiProvider()],
      ['openai', new OpenAIProvider()],
      ['custom', new CustomProvider()],
@@ -243,7 +309,7 @@ The codebase follows an extensible Provider Pattern:
 
 ---
 
-## 11. Running Automated Tests
+## 12. Running Automated Tests
 
 Run the complete Vitest test suite:
 ```bash

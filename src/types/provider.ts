@@ -1,6 +1,6 @@
 import { AISolutionResponse, SolutionGenerationRequest } from './solution';
 
-export type AIProviderType = 'gemini' | 'openai' | 'custom' | 'local_backend';
+export type AIProviderType = 'gemini' | 'openai' | 'codemind' | 'custom' | 'local_backend';
 
 export interface ModelOption {
   id: string;
@@ -8,6 +8,8 @@ export interface ModelOption {
   description?: string;
   isDefault?: boolean;
   isFrontierReasoning?: boolean;
+  isLocal?: boolean;
+  isCustomTrained?: boolean;
 }
 
 export interface SpendingSafeguards {
@@ -62,6 +64,15 @@ export interface ExtensionSettings {
   // Verified Connection Statuses
   connectionStatus: Record<string, ProviderConnectionStatus>;
 
+  // CodeMind AI Settings (Local Ollama / Fine-Tuned Model)
+  codemindEnabled: boolean;
+  codemindEndpoint: string;
+  codemindModel: string;
+  codemindCustomModel?: string;
+  codemindTimeoutSeconds: number;
+  codemindMaxTokens: number;
+  codemindTemperature: number;
+
   // Gemini Settings
   geminiApiKey: string;
   geminiModel: string;
@@ -85,6 +96,8 @@ export interface ProviderConnectionTestResult {
   availableModels?: string[];
   latencyMs?: number;
   testedModel?: string;
+  isLocalOllama?: boolean;
+  instructionHint?: string;
 }
 
 export interface IAIProvider {

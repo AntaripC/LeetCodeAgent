@@ -33,6 +33,8 @@ export const Header: React.FC<HeaderProps> = ({
                 ? 'Not on LeetCode'
                 : isConfigured
                 ? `${providerName} Ready`
+                : providerName.includes('CodeMind')
+                ? 'CodeMind Offline'
                 : `${providerName} Key Needed`}
             </span>
           </div>

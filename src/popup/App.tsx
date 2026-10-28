@@ -32,11 +32,7 @@ const DEMO_PROBLEM: ProblemContext = {
   statement:
     'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\n\nYou can return the answer in any order.',
   examples: [
-    {
-      input: 'nums = [2,7,11,15], target = 9',
-      output: '[0,1]',
-      explanation: 'Because nums[0] + nums[1] == 9, we return [0, 1].'
-    }
+    'Input: nums = [2,7,11,15], target = 9 -> Output: [0,1] (Because nums[0] + nums[1] == 9)'
   ],
   constraints: [
     '2 <= nums.length <= 10^4',
@@ -45,7 +41,8 @@ const DEMO_PROBLEM: ProblemContext = {
     'Only one valid answer exists.'
   ],
   starterCode: 'class Solution:\n    def twoSum(self, nums: List[int], target: int) -> List[int]:\n        pass',
-  editorLanguage: 'python3'
+  editorLanguage: 'python3',
+  detectedAt: Date.now()
 };
 
 export const App: React.FC = () => {
@@ -236,7 +233,9 @@ export const App: React.FC = () => {
   // Handle Provider / Model Change
   const handleProviderChange = (newProvider: AIProviderType) => {
     let newModel = settings.selectedModel;
-    if (newProvider === 'gemini') {
+    if (newProvider === 'codemind') {
+      newModel = settings.codemindModel || 'codemind-ai';
+    } else if (newProvider === 'gemini') {
       newModel = settings.geminiModel || 'gemini-4-argon';
       if (newModel.includes('2.5-flash')) newModel = 'gemini-4-argon';
     } else if (newProvider === 'openai') {
@@ -249,6 +248,7 @@ export const App: React.FC = () => {
       ...settings,
       selectedProvider: newProvider,
       selectedModel: newModel,
+      ...(newProvider === 'codemind' ? { codemindModel: newModel } : {}),
       ...(newProvider === 'gemini' ? { geminiModel: newModel } : {}),
       ...(newProvider === 'openai' ? { openaiModel: newModel } : {})
     };
@@ -262,6 +262,7 @@ export const App: React.FC = () => {
     const updated = {
       ...settings,
       selectedModel: cleanModel,
+      ...(settings.selectedProvider === 'codemind' ? { codemindModel: cleanModel } : {}),
       ...(settings.selectedProvider === 'gemini' ? { geminiModel: cleanModel } : {}),
       ...(settings.selectedProvider === 'openai' ? { openaiModel: cleanModel } : {}),
       ...(settings.selectedProvider === 'custom' ? { customModel: cleanModel } : {})
