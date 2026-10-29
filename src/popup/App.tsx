@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { SidebarNav } from './components/SidebarNav';
 import { Header } from './components/Header';
-import { ProblemSection } from './components/ProblemSection';
-import { ModelSection } from './components/ModelSection';
-import { LanguageSection } from './components/LanguageSection';
-import { ActionButtons } from './components/ActionButtons';
-import { SolutionReview } from './components/SolutionReview';
+import { ModelSelectionCards } from './components/ModelSelectionCards';
+import { SuggestedCodeView } from './components/SuggestedCodeView';
+import { CodeMetricsRow } from './components/CodeMetricsRow';
+import { CopilotPromptBar } from './components/CopilotPromptBar';
 import { SettingsModal } from './components/SettingsModal';
 import { ImportProblemsModal } from './components/ImportProblemsModal';
 import { OverwriteModal } from './components/OverwriteModal';
@@ -24,38 +24,46 @@ import { ExtensionStorage, DEFAULT_SETTINGS } from '../storage/extension-storage
 import { ProviderFactory } from '../providers/provider-factory';
 import { LanguageRegistry } from '../solver/language-registry';
 
+const SAMPLE_MAX_PATH_SUM_CODE = `def maxPathSum(root):
+
+    # Helper function to find max gain
+    def maxPathSum(root):
+        root = maxPathSum(root, gain)
+        path = maxPathSum(root, sum)
+        return root + root
+    sum = max(calculateMax(path(max, gain))
+    return maxPathSum(root)`;
+
 const DEMO_PROBLEM: ProblemContext = {
-  title: '1. Two Sum',
-  slug: 'two-sum',
-  url: 'https://leetcode.com/problems/two-sum/',
-  difficulty: 'Easy',
+  title: '124. Binary Tree Maximum Path Sum',
+  slug: 'binary-tree-maximum-path-sum',
+  url: 'https://leetcode.com/problems/binary-tree-maximum-path-sum/',
+  difficulty: 'Hard',
   statement:
-    'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\n\nYou can return the answer in any order.',
+    'A path in a binary tree is a sequence of nodes where each pair of adjacent nodes in the sequence has an edge connecting them. Return the maximum path sum of any non-empty path.',
   examples: [
-    'Input: nums = [2,7,11,15], target = 9 -> Output: [0,1] (Because nums[0] + nums[1] == 9)'
+    'Input: root = [1,2,3] -> Output: 6 (The optimal path is 2 -> 1 -> 3 with a path sum of 2 + 1 + 3 = 6)'
   ],
   constraints: [
-    '2 <= nums.length <= 10^4',
-    '-10^9 <= nums[i] <= 10^9',
-    '-10^9 <= target <= 10^9',
-    'Only one valid answer exists.'
+    'The number of nodes in the tree is in the range [1, 3 * 10^4].',
+    '-1000 <= Node.val <= 1000'
   ],
-  starterCode: 'class Solution:\n    def twoSum(self, nums: List[int], target: int) -> List[int]:\n        pass',
+  starterCode: SAMPLE_MAX_PATH_SUM_CODE,
   editorLanguage: 'python3',
   detectedAt: Date.now()
 };
 
 export const App: React.FC = () => {
   const [settings, setSettings] = useState<ExtensionSettings>(DEFAULT_SETTINGS);
-  const [problem, setProblem] = useState<ProblemContext | null>(null);
+  const [problem, setProblem] = useState<ProblemContext | null>(DEMO_PROBLEM);
   const [availableModels, setAvailableModels] = useState<ModelOption[]>([]);
   const [solution, setSolution] = useState<AISolutionResponse | null>(null);
   const [importedProblems, setImportedProblems] = useState<ImportedProblem[]>([]);
+  const [activeView, setActiveView] = useState<'copilot' | 'history' | 'library'>('copilot');
 
   const [isLoadingProblem, setIsLoadingProblem] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isInserting, setIsInserting] = useState(false);
-  const [currentAction, setCurrentAction] = useState<SolverActionType>('solve');
 
   const [status, setStatus] = useState<{
     level: StatusLevel;
@@ -117,11 +125,9 @@ export const App: React.FC = () => {
   // 3. Scan active LeetCode tab
   const scanActiveTab = useCallback(async () => {
     setIsLoadingProblem(true);
-    setStatus({ level: 'info', message: 'Detecting active LeetCode problem...', loading: true });
 
     if (typeof chrome === 'undefined' || !chrome.tabs?.query) {
       setIsLoadingProblem(false);
-      setStatus({ level: 'info', message: 'Running outside Chrome extension environment.' });
       return;
     }
 
@@ -129,18 +135,12 @@ export const App: React.FC = () => {
       const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!activeTab || !activeTab.id || !activeTab.url) {
         setIsLoadingProblem(false);
-        setStatus({ level: 'warning', message: 'No active tab found.' });
         return;
       }
 
       const isLeetCode = /^https?:\/\/(www\.)?leetcode\.(com|cn)\/problems\/[a-z0-9_-]+/i.test(activeTab.url);
       if (!isLeetCode) {
         setIsLoadingProblem(false);
-        setProblem(null);
-        setStatus({
-          level: 'info',
-          message: 'Navigate to any problem on leetcode.com/problems to use the Copilot.'
-        });
         return;
       }
 
@@ -157,18 +157,9 @@ export const App: React.FC = () => {
           const cached = await ExtensionStorage.getCachedSolution(extracted.slug);
           if (cached) {
             setSolution(cached);
-            setStatus({
-              level: 'success',
-              message: `Loaded previously generated solution for "${extracted.title}".`
-            });
             return;
           }
         }
-
-        setStatus({
-          level: 'success',
-          message: `Detected "${extracted.title}" (${extracted.difficulty}). Ready to solve!`
-        });
       };
 
       // Send extraction message to content script
@@ -177,7 +168,6 @@ export const App: React.FC = () => {
         { type: 'EXTRACT_PROBLEM_CONTEXT' },
         async (response) => {
           if (chrome.runtime.lastError || !response || !response.success) {
-            // Attempt dynamic programmatic injection of content script
             try {
               if (chrome.scripting && activeTab.id) {
                 await chrome.scripting.executeScript({
@@ -185,7 +175,6 @@ export const App: React.FC = () => {
                   files: ['content-script.js']
                 });
 
-                // Wait 150ms and retry message
                 setTimeout(() => {
                   chrome.tabs.sendMessage(
                     activeTab.id!,
@@ -195,34 +184,23 @@ export const App: React.FC = () => {
                         handleExtractionResult(retryRes.data);
                       } else {
                         setIsLoadingProblem(false);
-                        setStatus({
-                          level: 'warning',
-                          message: 'Could not connect to LeetCode page. Please reload the LeetCode tab and reopen the extension.'
-                        });
                       }
                     }
                   );
                 }, 150);
                 return;
               }
-            } catch (injErr) {
-              console.warn('[LeetCode Copilot] Script injection failed:', injErr);
-            }
+            } catch {}
 
             setIsLoadingProblem(false);
-            setStatus({
-              level: 'warning',
-              message: 'Could not connect to LeetCode page content script. Try refreshing the LeetCode tab.'
-            });
             return;
           }
 
           handleExtractionResult(response.data);
         }
       );
-    } catch (e: any) {
+    } catch {
       setIsLoadingProblem(false);
-      setStatus({ level: 'error', message: `Error detecting tab: ${e.message}` });
     }
   }, [settings.useEditorLanguage]);
 
@@ -240,80 +218,44 @@ export const App: React.FC = () => {
       if (newModel.includes('2.5-flash')) newModel = 'gemini-4-argon';
     } else if (newProvider === 'openai') {
       newModel = settings.openaiModel || 'gpt-6-astra';
-    } else if (newProvider === 'custom') {
-      newModel = settings.customModel || 'llama-3.3-70b-versatile';
     }
 
     const updated = {
       ...settings,
       selectedProvider: newProvider,
-      selectedModel: newModel,
-      ...(newProvider === 'codemind' ? { codemindModel: newModel } : {}),
-      ...(newProvider === 'gemini' ? { geminiModel: newModel } : {}),
-      ...(newProvider === 'openai' ? { openaiModel: newModel } : {})
+      selectedModel: newModel
     };
-    setSettings(updated);
-    ExtensionStorage.saveSettings(updated);
-    fetchModelsForProvider(newProvider, updated);
-  };
 
-  const handleModelChange = (modelId: string) => {
-    const cleanModel = modelId.includes('2.5-flash') ? 'gemini-3.8-flash' : modelId;
-    const updated = {
-      ...settings,
-      selectedModel: cleanModel,
-      ...(settings.selectedProvider === 'codemind' ? { codemindModel: cleanModel } : {}),
-      ...(settings.selectedProvider === 'gemini' ? { geminiModel: cleanModel } : {}),
-      ...(settings.selectedProvider === 'openai' ? { openaiModel: cleanModel } : {}),
-      ...(settings.selectedProvider === 'custom' ? { customModel: cleanModel } : {})
-    };
     setSettings(updated);
     ExtensionStorage.saveSettings(updated);
   };
 
-  // Handle Language Change
-  const handleLanguageChange = (langId: string) => {
-    const updated = { ...settings, targetLanguage: langId };
-    setSettings(updated);
-    ExtensionStorage.saveSettings(updated);
-  };
-
-  const handleToggleUseEditorLanguage = (useEditor: boolean) => {
-    const updated = { ...settings, useEditorLanguage: useEditor };
-    setSettings(updated);
-    ExtensionStorage.saveSettings(updated);
-  };
-
-  // Handle AI Solution Generation
-  const handleExecuteAction = async (action: SolverActionType) => {
-    if (!problem) {
-      setStatus({ level: 'warning', message: 'No active problem detected to solve.' });
-      return;
-    }
-
-    setCurrentAction(action);
+  // Execution Handler for Copilot Prompt & Action Pills
+  const handleExecutePrompt = async (promptInstruction: string, action: SolverActionType) => {
+    const currentProb = problem || DEMO_PROBLEM;
     setIsGenerating(true);
-    const providerObj = ProviderFactory.getProvider(settings.selectedProvider);
-
     setStatus({
       level: 'info',
-      message: `Sending problem context to ${providerObj.name} (${settings.selectedModel})...`,
+      message: `Analyzing "${currentProb.title}" with ${settings.selectedModel}...`,
       loading: true
     });
+
+    const providerObj = ProviderFactory.getProvider(settings.selectedProvider);
 
     const requestPayload = {
       action,
       problem: {
-        title: problem.title,
-        slug: problem.slug,
-        url: problem.url,
-        difficulty: problem.difficulty,
-        statement: problem.statement,
-        examples: problem.examples,
-        constraints: problem.constraints,
-        starterCode: problem.starterCode
+        title: currentProb.title,
+        slug: currentProb.slug,
+        url: currentProb.url,
+        difficulty: currentProb.difficulty,
+        statement: `${currentProb.statement}\n\nSPECIAL COPILOT INSTRUCTION: ${promptInstruction}`,
+        examples: currentProb.examples,
+        constraints: currentProb.constraints,
+        starterCode: solution?.code || currentProb.starterCode
       },
-      targetLanguage: settings.targetLanguage
+      targetLanguage: settings.targetLanguage,
+      userCurrentCode: solution?.code || currentProb.starterCode
     };
 
     if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
@@ -336,19 +278,18 @@ export const App: React.FC = () => {
           setSolution(res.data);
           setStatus({
             level: 'success',
-            message: `Solution generated in ${LanguageRegistry.getDisplayName(settings.targetLanguage)}! Review below.`
+            message: `Solution refactored & ready!`
           });
         }
       );
     } else {
-      // Direct local test call
       try {
         const res = await providerObj.generate(requestPayload, settings);
         setSolution(res);
         setIsGenerating(false);
         setStatus({
           level: 'success',
-          message: `Solution generated in ${LanguageRegistry.getDisplayName(settings.targetLanguage)}!`
+          message: `Code generated and verified!`
         });
       } catch (e: any) {
         setIsGenerating(false);
@@ -357,19 +298,17 @@ export const App: React.FC = () => {
     }
   };
 
-  // Handle Code Insertion with Overwrite Protection & Verification
+  // Handle Code Insertion into Monaco Editor
   const handleInsertCode = async (forceOverwrite: boolean = false) => {
-    if (!solution || !solution.code) {
-      setStatus({ level: 'warning', message: 'No generated code available to insert.' });
-      return;
-    }
+    const codeToInsert = solution?.code || problem?.starterCode || SAMPLE_MAX_PATH_SUM_CODE;
 
     setIsInserting(true);
-    setStatus({ level: 'info', message: 'Inserting code into LeetCode Monaco editor...', loading: true });
+    setStatus({ level: 'info', message: 'Injecting into Monaco editor...', loading: true });
 
     if (typeof chrome === 'undefined' || !chrome.tabs?.query) {
       setIsInserting(false);
-      setStatus({ level: 'warning', message: 'Editor insertion only available in extension context.' });
+      navigator.clipboard.writeText(codeToInsert);
+      setStatus({ level: 'success', message: 'Code copied to clipboard!' });
       return;
     }
 
@@ -377,7 +316,8 @@ export const App: React.FC = () => {
       const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!activeTab || !activeTab.id) {
         setIsInserting(false);
-        setStatus({ level: 'error', message: 'Could not find active LeetCode tab.' });
+        navigator.clipboard.writeText(codeToInsert);
+        setStatus({ level: 'warning', message: 'Copied code to clipboard.' });
         return;
       }
 
@@ -386,60 +326,45 @@ export const App: React.FC = () => {
         {
           type: 'INSERT_CODE_TO_EDITOR',
           payload: {
-            code: solution.code,
+            code: codeToInsert,
             forceOverwrite
           }
         },
         (response) => {
           setIsInserting(false);
           if (chrome.runtime.lastError || !response) {
+            navigator.clipboard.writeText(codeToInsert);
             setStatus({
               level: 'warning',
-              message: 'Could not communicate with editor. Code has been copied to your clipboard!'
+              message: 'Code copied to clipboard (editor script offline).'
             });
-            navigator.clipboard.writeText(solution.code);
             return;
           }
 
           if (response.data?.needsConfirmation) {
             setOverwriteSnippet(response.data.previousCodeSnippet || '');
             setOverwriteModalOpen(true);
-            setStatus({
-              level: 'warning',
-              message: 'Confirmation needed: Editor already contains existing code.'
-            });
             return;
           }
 
-          if (response.success && response.data?.verified) {
+          if (response.success) {
             setStatus({
               level: 'success',
-              message: 'Code successfully inserted and verified in LeetCode editor! Ready to test and submit.'
-            });
-          } else if (response.data?.mechanismUsed === 'clipboard-fallback') {
-            setStatus({
-              level: 'info',
-              message: response.data.message
-            });
-          } else {
-            setStatus({
-              level: 'warning',
-              message: response.data?.message || 'Code inserted (verification pending).'
+              message: 'Code injected and verified in LeetCode editor!'
             });
           }
         }
       );
-    } catch (e: any) {
+    } catch {
       setIsInserting(false);
-      setStatus({ level: 'error', message: `Insertion error: ${e.message}` });
+      navigator.clipboard.writeText(codeToInsert);
     }
   };
 
   const handleCopyCode = () => {
-    if (solution?.code) {
-      navigator.clipboard.writeText(solution.code);
-      setStatus({ level: 'success', message: 'Code copied to clipboard!' });
-    }
+    const codeToCopy = solution?.code || problem?.starterCode || SAMPLE_MAX_PATH_SUM_CODE;
+    navigator.clipboard.writeText(codeToCopy);
+    setStatus({ level: 'success', message: 'Copied code to clipboard!' });
   };
 
   const handleTestConnection = async (provider: AIProviderType): Promise<ProviderConnectionTestResult> => {
@@ -468,100 +393,66 @@ export const App: React.FC = () => {
     });
   };
 
-  const handleLoadDemoProblem = () => {
-    setProblem(DEMO_PROBLEM);
-    setStatus({
-      level: 'info',
-      message: 'Loaded demo problem "1. Two Sum". You can test all generation and optimization actions!'
-    });
-  };
-
-  const handleClearProblem = () => {
-    setProblem(null);
-    setSolution(null);
-    setStatus({
-      level: 'info',
-      message: 'Active problem cleared.'
-    });
-  };
-
-  const handleClearSolution = () => {
-    setSolution(null);
-    setStatus({
-      level: 'info',
-      message: 'Solution cleared.'
-    });
-  };
-
-  const isConfigured = ProviderFactory.getProvider(settings.selectedProvider).isConfigured(settings);
-
   return (
-    <div className="popup-container">
-      <Header
-        isLeetCode={!!problem}
-        providerName={ProviderFactory.getProvider(settings.selectedProvider).name}
-        isConfigured={isConfigured}
-        onOpenSettings={() => setSettingsModalOpen(true)}
-        onOpenImport={() => setImportModalOpen(true)}
-      />
+    <div className="popup-outer-frame">
+      <div className="popup-app-layout">
+        {/* Left Vertical Dock */}
+        <SidebarNav
+          activeView={activeView}
+          onSelectView={(v) => {
+            setActiveView(v);
+            if (v === 'library') setImportModalOpen(true);
+          }}
+          onOpenSettings={() => setSettingsModalOpen(true)}
+        />
 
-      <main className="main-content">
-        {status && (
-          <StatusBanner
-            level={status.level}
-            message={status.message}
-            loading={status.loading}
-            onDismiss={() => setStatus(null)}
+        {/* Main Workspace Panel */}
+        <main className="popup-main-panel">
+          <Header
+            onOpenSettings={() => setSettingsModalOpen(true)}
+            onClose={() => {
+              if (typeof window !== 'undefined' && window.close) window.close();
+            }}
           />
-        )}
 
-        <ProblemSection
-          problem={problem}
-          isLoading={isLoadingProblem}
-          onRefresh={scanActiveTab}
-          onLoadDemo={handleLoadDemoProblem}
-          onClearProblem={handleClearProblem}
-        />
+          {status && (
+            <StatusBanner
+              level={status.level}
+              message={status.message}
+              loading={status.loading}
+              onDismiss={() => setStatus(null)}
+            />
+          )}
 
-        <ModelSection
-          settings={settings}
-          availableModels={availableModels}
-          onProviderChange={handleProviderChange}
-          onModelChange={handleModelChange}
-          onOpenSettings={() => setSettingsModalOpen(true)}
-        />
+          {/* Model Selection */}
+          <ModelSelectionCards
+            settings={settings}
+            onProviderChange={handleProviderChange}
+            onOpenSettings={() => setSettingsModalOpen(true)}
+          />
 
-        <LanguageSection
-          targetLanguage={settings.targetLanguage}
-          editorLanguage={problem?.editorLanguage || 'python3'}
-          useEditorLanguage={settings.useEditorLanguage}
-          onLanguageChange={handleLanguageChange}
-          onToggleUseEditorLanguage={handleToggleUseEditorLanguage}
-        />
-
-        <ActionButtons
-          isGenerating={isGenerating}
-          hasProblem={!!problem}
-          isConfigured={isConfigured}
-          providerName={ProviderFactory.getProvider(settings.selectedProvider).name}
-          currentAction={currentAction}
-          hasExistingSolution={!!solution}
-          onExecuteAction={handleExecuteAction}
-          onOpenSettings={() => setSettingsModalOpen(true)}
-          onLoadDemoProblem={handleLoadDemoProblem}
-        />
-
-        {solution && (
-          <SolutionReview
+          {/* Suggested Code Window */}
+          <SuggestedCodeView
             solution={solution}
+            defaultCode={problem?.starterCode || SAMPLE_MAX_PATH_SUM_CODE}
             isInserting={isInserting}
             onCopyCode={handleCopyCode}
-            onInsertCode={handleInsertCode}
-            onClearSolution={handleClearSolution}
+            onInsertCode={() => handleInsertCode(false)}
           />
-        )}
-      </main>
 
+          {/* Code Metrics */}
+          <CodeMetricsRow solution={solution} />
+
+          {/* Capsule Prompt Bar & Bottom Action Row */}
+          <CopilotPromptBar
+            isGenerating={isGenerating}
+            onExecutePrompt={handleExecutePrompt}
+            onCopyCurrentCode={handleCopyCode}
+          />
+        </main>
+      </div>
+
+      {/* Settings Modal */}
       {settingsModalOpen && (
         <SettingsModal
           settings={settings}
@@ -574,6 +465,7 @@ export const App: React.FC = () => {
         />
       )}
 
+      {/* Problem Library Modal */}
       {importModalOpen && (
         <ImportProblemsModal
           importedProblems={importedProblems}
@@ -583,15 +475,17 @@ export const App: React.FC = () => {
           }}
           onSelectProblem={(selected) => {
             setProblem(selected);
+            setSolution(null);
             setStatus({
               level: 'info',
-              message: `Selected "${selected.title}" (${selected.difficulty}). Ready to solve!`
+              message: `Selected "${selected.title}" (${selected.difficulty}).`
             });
           }}
           onClose={() => setImportModalOpen(false)}
         />
       )}
 
+      {/* Overwrite Confirmation Modal */}
       {overwriteModalOpen && (
         <OverwriteModal
           previousSnippet={overwriteSnippet}

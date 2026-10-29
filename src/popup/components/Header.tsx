@@ -1,61 +1,66 @@
 import React from 'react';
-import { Settings, BookmarkPlus, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Settings, X } from 'lucide-react';
 
 interface HeaderProps {
-  isLeetCode: boolean;
-  providerName: string;
-  isConfigured: boolean;
   onOpenSettings: () => void;
-  onOpenImport: () => void;
+  onClose?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({
-  isLeetCode,
-  providerName,
-  isConfigured,
-  onOpenSettings,
-  onOpenImport
-}) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenSettings, onClose }) => {
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    } else if (typeof window !== 'undefined' && window.close) {
+      window.close();
+    }
+  };
+
   return (
-    <header className="header">
-      <div className="header-left">
-        <div className="logo-badge" title="LeetCode Copilot Pro">
-          <Sparkles size={15} />
-        </div>
-        <div className="title-area">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <h1>LeetCode Copilot</h1>
-            <span className="pro-badge">PRO</span>
-          </div>
-          <div className="status-pill">
-            <span
-              className={`status-dot ${isLeetCode ? (isConfigured ? 'active' : 'ready') : 'inactive'}`}
+    <header className="copilot-header">
+      <div className="copilot-header-left">
+        {/* LeetCode Copilot Logo Glyph */}
+        <div className="copilot-logo-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* LeetCode stylized chevron bracket */}
+            <path
+              d="M16 4L7.5 11.5C7.2 11.8 7.2 12.2 7.5 12.5L16 20"
+              stroke="#f59e0b"
+              strokeWidth="2.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
-            <span>
-              {!isLeetCode
-                ? 'Standby (Open LeetCode)'
-                : isConfigured
-                ? `${providerName.replace(/\(.*\)/, '').trim()} Active`
-                : 'Engine Ready'}
-            </span>
-          </div>
+            <path
+              d="M10 12H18"
+              stroke="#ffffff"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
+
+        <div className="copilot-title-group">
+          <h1 className="copilot-app-title">LeetCode AI Copilot</h1>
+          <span className="copilot-version-pill">v1.2.0</span>
         </div>
       </div>
 
-      <div className="header-actions">
+      <div className="copilot-header-right">
         <button
-          className="icon-button"
-          onClick={onOpenImport}
-          title="Problem Library & Batch Imports"
-        >
-          <BookmarkPlus size={15} />
-        </button>
-        <button
-          className="icon-button"
+          className="header-action-text-btn"
           onClick={onOpenSettings}
-          title="Copilot Preferences"
+          title="Open Settings & API Keys"
         >
           <Settings size={15} />
+          <span>Settings</span>
+        </button>
+        <span className="header-divider">/</span>
+        <button
+          className="header-action-text-btn"
+          onClick={handleClose}
+          title="Close Copilot"
+        >
+          <X size={15} />
+          <span>Close</span>
         </button>
       </div>
     </header>
