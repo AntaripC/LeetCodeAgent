@@ -143,6 +143,24 @@ export class ResponseValidator {
       }
     }
 
+    const formatTextField = (val: any, fallback: string): string => {
+      if (!val) return fallback;
+      if (typeof val === 'string') return val.trim();
+      if (Array.isArray(val)) {
+        return val.map((item) => (typeof item === 'object' ? JSON.stringify(item) : String(item))).join('\n');
+      }
+      if (typeof val === 'object') {
+        if (Array.isArray(val.steps)) {
+          const header = val.name ? `${val.name}:\n` : '';
+          return `${header}${val.steps.map((s: any, idx: number) => `${idx + 1}. ${s}`).join('\n')}`;
+        }
+        return Object.entries(val)
+          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+          .join('\n');
+      }
+      return String(val);
+    };
+
     // Build structured output
     const edgeCases: string[] = Array.isArray(parsed.edgeCases)
       ? parsed.edgeCases.map((e: any) => String(e))
@@ -153,15 +171,16 @@ export class ResponseValidator {
       : parsed.assumptions ? [String(parsed.assumptions)] : [];
 
     const sanitizedResponse: AISolutionResponse = {
-      problemSummary: String(parsed.problemSummary || 'Problem summary not provided by model.'),
-      algorithm: String(parsed.algorithm || 'Algorithm explanation not provided.'),
-      correctness: String(parsed.correctness || 'Correctness argument not provided.'),
+      problemSummary: formatTextField(parsed.problemSummary, 'Problem summary not provided by model.'),
+      algorithm: formatTextField(parsed.algorithm, 'Algorithm explanation not provided.'),
+      correctness: formatTextField(parsed.correctness, 'Correctness argument not provided.'),
       code: sanitizedCode,
       language: targetLang,
       timeComplexity: String(parsed.timeComplexity || 'O(?)'),
       spaceComplexity: String(parsed.spaceComplexity || 'O(?)'),
       edgeCases,
       assumptions,
+      thinking: parsed.thinking ? formatTextField(parsed.thinking, '') : undefined,
       rawResponse: rawText
     };
 

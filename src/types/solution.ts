@@ -1,6 +1,7 @@
 export type SolverActionType = 'solve' | 'explain' | 'optimize' | 'debug';
 
 export interface AISolutionResponse {
+  thinking?: string;
   problemSummary: string;
   algorithm: string;
   correctness: string;

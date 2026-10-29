@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, ArrowRightCircle, Check, Code, BookOpen, Clock, ShieldCheck, Download, Trash2 } from 'lucide-react';
+import { Copy, ArrowRightCircle, Check, Code, BookOpen, Clock, ShieldCheck, Download, Trash2, Zap } from 'lucide-react';
 import { AISolutionResponse } from '../../types';
 import { LanguageRegistry } from '../../solver/language-registry';
 
@@ -18,7 +18,7 @@ export const SolutionReview: React.FC<SolutionReviewProps> = ({
   onInsertCode,
   onClearSolution
 }) => {
-  const [activeTab, setActiveTab] = useState<'code' | 'explanation' | 'complexity' | 'edgeCases'>('code');
+  const [activeTab, setActiveTab] = useState<'code' | 'thinking' | 'explanation' | 'complexity' | 'edgeCases'>('code');
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -61,6 +61,17 @@ export const SolutionReview: React.FC<SolutionReviewProps> = ({
           <Code size={12} style={{ display: 'inline', marginRight: '4px' }} />
           Code ({displayName})
         </button>
+
+        {solution.thinking && (
+          <button
+            className={`tab-btn ${activeTab === 'thinking' ? 'active' : ''}`}
+            onClick={() => setActiveTab('thinking')}
+            title="View fast-thinking reasoning and invariant trace"
+          >
+            <Zap size={12} color="#f59e0b" style={{ display: 'inline', marginRight: '4px' }} />
+            Fast Thinking
+          </button>
+        )}
 
         <button
           className={`tab-btn ${activeTab === 'explanation' ? 'active' : ''}`}
@@ -139,6 +150,28 @@ export const SolutionReview: React.FC<SolutionReviewProps> = ({
             </div>
           </div>
           <div className="code-content">{solution.code}</div>
+        </div>
+      )}
+
+      {activeTab === 'thinking' && (
+        <div className="review-section" style={{ maxHeight: '240px', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, color: 'var(--accent-primary)', marginBottom: '8px' }}>
+            <Zap size={14} color="#f59e0b" />
+            <span>Fast-Thinking Intuition & Chain of Thought</span>
+          </div>
+          <div style={{
+            background: 'rgba(0, 0, 0, 0.3)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '6px',
+            padding: '10px',
+            fontSize: '12px',
+            lineHeight: 1.5,
+            color: 'var(--text-secondary)',
+            whiteSpace: 'pre-line',
+            fontFamily: 'var(--font-mono, monospace)'
+          }}>
+            {solution.thinking || 'No internal reasoning trace recorded.'}
+          </div>
         </div>
       )}
 

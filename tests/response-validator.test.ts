@@ -81,4 +81,25 @@ I hope this helps!
     expect(result.warnings.length).toBeGreaterThan(0);
     expect(result.warnings[0]).toContain('Expected solution in cpp, but model tagged response as python3');
   });
+
+  it('should preserve fast-thinking intuition and normalize scalar edgeCases', () => {
+    const raw = JSON.stringify({
+      thinking: 'Array is unsorted, target sum -> single pass hash map O(n) time O(n) space.',
+      problemSummary: 'Find two indices summing to target',
+      algorithm: 'Hash map with complement lookup',
+      correctness: 'Stores seen values and indexes',
+      code: 'def twoSum(nums, target): return []',
+      language: 'python3',
+      timeComplexity: 'O(n)',
+      spaceComplexity: 'O(n)',
+      edgeCases: 'Single duplicate number',
+      assumptions: 'Unique pair exists'
+    });
+
+    const result = ResponseValidator.validate(raw, 'python3');
+    expect(result.isValid).toBe(true);
+    expect(result.sanitizedResponse?.thinking).toBe('Array is unsorted, target sum -> single pass hash map O(n) time O(n) space.');
+    expect(result.sanitizedResponse?.edgeCases).toEqual(['Single duplicate number']);
+    expect(result.sanitizedResponse?.assumptions).toEqual(['Unique pair exists']);
+  });
 });

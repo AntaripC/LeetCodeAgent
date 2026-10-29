@@ -36,7 +36,7 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   codemindCustomModel: '',
   codemindTimeoutSeconds: 60,
   codemindMaxTokens: 4096,
-  codemindTemperature: 0.1,
+  codemindTemperature: 0.2,
 
   geminiApiKey: '',
   geminiModel: 'gemini-4-argon',

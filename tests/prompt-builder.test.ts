@@ -21,8 +21,10 @@ describe('PromptBuilder', () => {
   it('should include problem statement, constraints, and JSON schema instructions', () => {
     const { systemInstruction, userPrompt } = PromptBuilder.buildPrompt(baseRequest);
     expect(systemInstruction).toContain('valid JSON object');
+    expect(systemInstruction).toContain('thinking');
     expect(systemInstruction).toContain('problemSummary');
     expect(systemInstruction).toContain('timeComplexity');
+    expect(systemInstruction).toContain('FAST-THINKING & ALGORITHMIC ARCHETYPE RULES');
     expect(userPrompt).toContain('Valid Parentheses');
     expect(userPrompt).toContain('Given string s containing parentheses');
     expect(userPrompt).toContain('Python 3');
