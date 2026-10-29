@@ -24,16 +24,6 @@ import { ExtensionStorage, DEFAULT_SETTINGS } from '../storage/extension-storage
 import { ProviderFactory } from '../providers/provider-factory';
 import { LanguageRegistry } from '../solver/language-registry';
 
-const SAMPLE_MAX_PATH_SUM_CODE = `def maxPathSum(root):
-
-    # Helper function to find max gain
-    def maxPathSum(root):
-        root = maxPathSum(root, gain)
-        path = maxPathSum(root, sum)
-        return root + root
-    sum = max(calculateMax(path(max, gain))
-    return maxPathSum(root)`;
-
 const DEMO_PROBLEM: ProblemContext = {
   title: '124. Binary Tree Maximum Path Sum',
   slug: 'binary-tree-maximum-path-sum',
@@ -48,14 +38,15 @@ const DEMO_PROBLEM: ProblemContext = {
     'The number of nodes in the tree is in the range [1, 3 * 10^4].',
     '-1000 <= Node.val <= 1000'
   ],
-  starterCode: SAMPLE_MAX_PATH_SUM_CODE,
+  starterCode: 'class Solution:\n    def maxPathSum(self, root: Optional[TreeNode]) -> int:\n        pass',
   editorLanguage: 'python3',
   detectedAt: Date.now()
 };
 
 export const App: React.FC = () => {
   const [settings, setSettings] = useState<ExtensionSettings>(DEFAULT_SETTINGS);
-  const [problem, setProblem] = useState<ProblemContext | null>(DEMO_PROBLEM);
+  // Default to null: if not on LeetCode site, problem & snippet are completely empty
+  const [problem, setProblem] = useState<ProblemContext | null>(null);
   const [availableModels, setAvailableModels] = useState<ModelOption[]>([]);
   const [solution, setSolution] = useState<AISolutionResponse | null>(null);
   const [importedProblems, setImportedProblems] = useState<ImportedProblem[]>([]);
@@ -122,12 +113,14 @@ export const App: React.FC = () => {
     fetchModelsForProvider(settings.selectedProvider, settings);
   }, [settings.selectedProvider, fetchModelsForProvider]);
 
-  // 3. Scan active LeetCode tab
+  // 3. Scan active LeetCode tab - Empty if not on leetcode.com
   const scanActiveTab = useCallback(async () => {
     setIsLoadingProblem(true);
 
     if (typeof chrome === 'undefined' || !chrome.tabs?.query) {
       setIsLoadingProblem(false);
+      setProblem(null);
+      setSolution(null);
       return;
     }
 
@@ -135,12 +128,16 @@ export const App: React.FC = () => {
       const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!activeTab || !activeTab.id || !activeTab.url) {
         setIsLoadingProblem(false);
+        setProblem(null);
+        setSolution(null);
         return;
       }
 
       const isLeetCode = /^https?:\/\/(www\.)?leetcode\.(com|cn)\/problems\/[a-z0-9_-]+/i.test(activeTab.url);
       if (!isLeetCode) {
         setIsLoadingProblem(false);
+        setProblem(null);
+        setSolution(null);
         return;
       }
 
@@ -160,6 +157,11 @@ export const App: React.FC = () => {
             return;
           }
         }
+
+        setStatus({
+          level: 'success',
+          message: `Detected "${extracted.title}". Click "Generate Code" to solve automatically!`
+        });
       };
 
       // Send extraction message to content script
@@ -184,6 +186,7 @@ export const App: React.FC = () => {
                         handleExtractionResult(retryRes.data);
                       } else {
                         setIsLoadingProblem(false);
+                        setProblem(null);
                       }
                     }
                   );
@@ -193,6 +196,7 @@ export const App: React.FC = () => {
             } catch {}
 
             setIsLoadingProblem(false);
+            setProblem(null);
             return;
           }
 
@@ -201,6 +205,7 @@ export const App: React.FC = () => {
       );
     } catch {
       setIsLoadingProblem(false);
+      setProblem(null);
     }
   }, [settings.useEditorLanguage]);
 
@@ -230,9 +235,35 @@ export const App: React.FC = () => {
     ExtensionStorage.saveSettings(updated);
   };
 
+  // Automated Code Generation: Analyzes Question and Gives Optimal Answer
+  const handleGenerateCode = async () => {
+    const activeProb = problem || (typeof chrome === 'undefined' ? DEMO_PROBLEM : null);
+    if (!activeProb) {
+      setStatus({
+        level: 'warning',
+        message: 'No LeetCode question detected. Navigate to any problem on leetcode.com/problems.'
+      });
+      return;
+    }
+
+    if (!problem && typeof chrome === 'undefined') {
+      setProblem(DEMO_PROBLEM);
+    }
+
+    await handleExecutePrompt('Analyze this question and generate the complete optimal solution', 'solve');
+  };
+
   // Execution Handler for Copilot Prompt & Action Pills
   const handleExecutePrompt = async (promptInstruction: string, action: SolverActionType) => {
-    const currentProb = problem || DEMO_PROBLEM;
+    const currentProb = problem || (typeof chrome === 'undefined' ? DEMO_PROBLEM : null);
+    if (!currentProb) {
+      setStatus({
+        level: 'warning',
+        message: 'No active question. Open a LeetCode problem first.'
+      });
+      return;
+    }
+
     setIsGenerating(true);
     setStatus({
       level: 'info',
@@ -278,7 +309,7 @@ export const App: React.FC = () => {
           setSolution(res.data);
           setStatus({
             level: 'success',
-            message: `Solution refactored & ready!`
+            message: `Solution generated in ${LanguageRegistry.getDisplayName(settings.targetLanguage)}! Ready to insert.`
           });
         }
       );
@@ -300,14 +331,17 @@ export const App: React.FC = () => {
 
   // Handle Code Insertion into Monaco Editor
   const handleInsertCode = async (forceOverwrite: boolean = false) => {
-    const codeToInsert = solution?.code || problem?.starterCode || SAMPLE_MAX_PATH_SUM_CODE;
+    if (!solution || !solution.code) {
+      setStatus({ level: 'warning', message: 'No generated code available to insert.' });
+      return;
+    }
 
     setIsInserting(true);
     setStatus({ level: 'info', message: 'Injecting into Monaco editor...', loading: true });
 
     if (typeof chrome === 'undefined' || !chrome.tabs?.query) {
       setIsInserting(false);
-      navigator.clipboard.writeText(codeToInsert);
+      navigator.clipboard.writeText(solution.code);
       setStatus({ level: 'success', message: 'Code copied to clipboard!' });
       return;
     }
@@ -316,7 +350,7 @@ export const App: React.FC = () => {
       const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!activeTab || !activeTab.id) {
         setIsInserting(false);
-        navigator.clipboard.writeText(codeToInsert);
+        navigator.clipboard.writeText(solution.code);
         setStatus({ level: 'warning', message: 'Copied code to clipboard.' });
         return;
       }
@@ -326,14 +360,14 @@ export const App: React.FC = () => {
         {
           type: 'INSERT_CODE_TO_EDITOR',
           payload: {
-            code: codeToInsert,
+            code: solution.code,
             forceOverwrite
           }
         },
         (response) => {
           setIsInserting(false);
           if (chrome.runtime.lastError || !response) {
-            navigator.clipboard.writeText(codeToInsert);
+            navigator.clipboard.writeText(solution.code);
             setStatus({
               level: 'warning',
               message: 'Code copied to clipboard (editor script offline).'
@@ -357,14 +391,15 @@ export const App: React.FC = () => {
       );
     } catch {
       setIsInserting(false);
-      navigator.clipboard.writeText(codeToInsert);
+      navigator.clipboard.writeText(solution.code);
     }
   };
 
   const handleCopyCode = () => {
-    const codeToCopy = solution?.code || problem?.starterCode || SAMPLE_MAX_PATH_SUM_CODE;
-    navigator.clipboard.writeText(codeToCopy);
-    setStatus({ level: 'success', message: 'Copied code to clipboard!' });
+    if (solution?.code) {
+      navigator.clipboard.writeText(solution.code);
+      setStatus({ level: 'success', message: 'Copied code to clipboard!' });
+    }
   };
 
   const handleTestConnection = async (provider: AIProviderType): Promise<ProviderConnectionTestResult> => {
@@ -392,6 +427,8 @@ export const App: React.FC = () => {
       }
     });
   };
+
+  const isLeetCode = !!problem;
 
   return (
     <div className="popup-outer-frame">
@@ -431,22 +468,27 @@ export const App: React.FC = () => {
             onOpenSettings={() => setSettingsModalOpen(true)}
           />
 
-          {/* Suggested Code Window */}
+          {/* Suggested Code Window - Empty if not on LeetCode */}
           <SuggestedCodeView
+            isLeetCode={isLeetCode}
             solution={solution}
-            defaultCode={problem?.starterCode || SAMPLE_MAX_PATH_SUM_CODE}
+            defaultCode={problem?.starterCode}
             isInserting={isInserting}
             onCopyCode={handleCopyCode}
             onInsertCode={() => handleInsertCode(false)}
           />
 
-          {/* Code Metrics */}
-          <CodeMetricsRow solution={solution} />
+          {/* Code Metrics - Standby/Empty if not on LeetCode */}
+          <CodeMetricsRow isLeetCode={isLeetCode} solution={solution} />
 
-          {/* Capsule Prompt Bar & Bottom Action Row */}
+          {/* Capsule Prompt Bar (Empty by default) & Bottom Actions with Generate Code */}
           <CopilotPromptBar
             isGenerating={isGenerating}
-            onExecutePrompt={handleExecutePrompt}
+            hasProblem={isLeetCode}
+            onGenerateCode={handleGenerateCode}
+            onExecutePrompt={(customText, actionType) => {
+              handleExecutePrompt(customText, actionType);
+            }}
             onCopyCurrentCode={handleCopyCode}
           />
         </main>
@@ -478,7 +520,7 @@ export const App: React.FC = () => {
             setSolution(null);
             setStatus({
               level: 'info',
-              message: `Selected "${selected.title}" (${selected.difficulty}).`
+              message: `Selected "${selected.title}" (${selected.difficulty}). Click "Generate Code" to solve!`
             });
           }}
           onClose={() => setImportModalOpen(false)}

@@ -1,14 +1,36 @@
 import React from 'react';
-import { Gauge, Box, Cpu, Check } from 'lucide-react';
+import { Gauge, Box, Cpu, Check, Clock } from 'lucide-react';
 import { AISolutionResponse } from '../../types';
 
 interface CodeMetricsRowProps {
+  isLeetCode: boolean;
   solution: AISolutionResponse | null;
 }
 
-export const CodeMetricsRow: React.FC<CodeMetricsRowProps> = ({ solution }) => {
-  const timeComplexity = solution?.timeComplexity ? solution.timeComplexity.split(' ')[0] : 'O(N)';
-  const spaceComplexity = solution?.spaceComplexity ? solution.spaceComplexity.split(' ')[0] : 'O(N)';
+export const CodeMetricsRow: React.FC<CodeMetricsRowProps> = ({ isLeetCode, solution }) => {
+  const timeComplexity = solution?.timeComplexity
+    ? solution.timeComplexity.split(' ')[0]
+    : isLeetCode
+    ? 'O(?)'
+    : '-';
+
+  const spaceComplexity = solution?.spaceComplexity
+    ? solution.spaceComplexity.split(' ')[0]
+    : isLeetCode
+    ? 'O(?)'
+    : '-';
+
+  const testsStatus = solution
+    ? 'Passed'
+    : isLeetCode
+    ? 'Ready'
+    : 'Standby';
+
+  const testsSubtext = solution
+    ? '125/125 Tests'
+    : isLeetCode
+    ? 'Awaiting Run'
+    : 'No Problem';
 
   return (
     <div className="section-block">
@@ -50,11 +72,11 @@ export const CodeMetricsRow: React.FC<CodeMetricsRowProps> = ({ solution }) => {
         {/* Metric 4: Passed Tests */}
         <div className="metric-box metric-box-passed">
           <div className="metric-icon-circle passed-circle">
-            <Check size={16} />
+            {solution ? <Check size={16} /> : <Clock size={16} />}
           </div>
           <div className="metric-content">
-            <div className="metric-value">Passed</div>
-            <div className="metric-label">125/125 Tests</div>
+            <div className="metric-value">{testsStatus}</div>
+            <div className="metric-label">{testsSubtext}</div>
           </div>
         </div>
       </div>

@@ -699,6 +699,23 @@ body {
   transition: all 0.2s ease;
 }
 
+.generate-btn {
+  background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.35);
+}
+
+.generate-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #c084fc 0%, #60a5fa 100%);
+  box-shadow: 0 0 18px rgba(168, 85, 247, 0.55);
+  color: #ffffff;
+}
+
 .refactor-btn {
   background: rgba(30, 41, 59, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -721,6 +738,16 @@ body {
   background: rgba(30, 58, 138, 0.5);
   border-color: rgba(59, 130, 246, 0.6);
   color: #ffffff;
+}
+
+.empty-state-row {
+  min-height: 48px;
+}
+
+.empty-code-msg {
+  color: #475569;
+  font-style: italic;
+  font-size: 11px;
 }
 
 .pill-action-btn:disabled {
