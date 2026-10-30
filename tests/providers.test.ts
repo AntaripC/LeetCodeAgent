@@ -191,7 +191,7 @@ describe('AI Providers', () => {
     const gemini = new GeminiProvider();
 
     it('should accurately report configuration status based on API key', () => {
-      expect(gemini.isConfigured(DEFAULT_SETTINGS)).toBe(false);
+      expect(gemini.isConfigured({ ...DEFAULT_SETTINGS, geminiApiKey: '' })).toBe(false);
       expect(gemini.isConfigured({ ...DEFAULT_SETTINGS, geminiApiKey: 'AIzaSy12345' })).toBe(true);
     });
 

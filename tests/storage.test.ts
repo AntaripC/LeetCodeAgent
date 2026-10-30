@@ -9,7 +9,7 @@ describe('ExtensionStorage', () => {
   it('should return default settings when storage is empty', async () => {
     const settings = await ExtensionStorage.getSettings();
     expect(settings.selectedProvider).toBe('gemini');
-    expect(settings.geminiModel).toBe('gemini-4-argon');
+    expect(settings.geminiModel).toBe('gemini-flash-lite-latest');
     expect(settings.confirmBeforeOverwrite).toBe(true);
   });
 
@@ -18,7 +18,7 @@ describe('ExtensionStorage', () => {
     const settings = await ExtensionStorage.getSettings();
     expect(settings.geminiApiKey).toBe('test-key-123');
     expect(settings.selectedProvider).toBe('openai');
-    expect(settings.geminiModel).toBe('gemini-4-argon'); // Preserved default
+    expect(settings.geminiModel).toBe('gemini-flash-lite-latest'); // Preserved default
   });
 
   it('should cache and retrieve generated solutions by slug', async () => {

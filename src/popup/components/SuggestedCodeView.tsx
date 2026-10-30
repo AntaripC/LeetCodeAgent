@@ -22,9 +22,21 @@ export const SuggestedCodeView: React.FC<SuggestedCodeViewProps> = ({
   const [copied, setCopied] = useState(false);
   const [showThinking, setShowThinking] = useState(false);
 
+  // Normalize code with escaped newlines and CRLF
+  const normalizeCodeString = (code: string): string => {
+    if (!code) return '';
+    let text = String(code);
+    if (text.includes('\\n')) {
+      text = text.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n').replace(/\\t/g, '    ');
+    }
+    text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    return text.trim();
+  };
+
   // If not on LeetCode and no solution generated, snippet is completely empty
-  const displayCode = solution?.code || (isLeetCode ? (defaultCode || '') : '');
-  const lines = displayCode.trim() ? displayCode.split('\n') : [];
+  const rawCode = solution?.code || (isLeetCode ? (defaultCode || '') : '');
+  const displayCode = normalizeCodeString(rawCode);
+  const lines = displayCode.length > 0 ? displayCode.split('\n') : [];
 
   const handleCopy = () => {
     if (!displayCode.trim()) return;
@@ -35,6 +47,10 @@ export const SuggestedCodeView: React.FC<SuggestedCodeViewProps> = ({
 
   // Helper for highlighting keywords, comments, and functions
   const renderHighlightedLine = (line: string, index: number) => {
+    if (!line || line.length === 0) {
+      return '\u00A0';
+    }
+
     const trimmed = line.trim();
 
     if (trimmed.startsWith('#') || trimmed.startsWith('//')) {

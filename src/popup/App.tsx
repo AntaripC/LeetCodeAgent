@@ -7,6 +7,7 @@ import { CodeMetricsRow } from './components/CodeMetricsRow';
 import { CopilotPromptBar } from './components/CopilotPromptBar';
 import { SettingsModal } from './components/SettingsModal';
 import { ImportProblemsModal } from './components/ImportProblemsModal';
+import { HistoryModal } from './components/HistoryModal';
 import { OverwriteModal } from './components/OverwriteModal';
 import { StatusBanner, StatusLevel } from './components/StatusBanner';
 
@@ -64,6 +65,7 @@ export const App: React.FC = () => {
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [overwriteModalOpen, setOverwriteModalOpen] = useState(false);
   const [overwriteSnippet, setOverwriteSnippet] = useState('');
 
@@ -219,8 +221,10 @@ export const App: React.FC = () => {
     if (newProvider === 'codemind') {
       newModel = settings.codemindModel || 'codemind-ai';
     } else if (newProvider === 'gemini') {
-      newModel = settings.geminiModel || 'gemini-4-argon';
-      if (newModel.includes('2.5-flash')) newModel = 'gemini-4-argon';
+      newModel = settings.geminiModel || 'gemini-flash-lite-latest';
+      if (newModel.includes('2.5-flash') || newModel.includes('2.5-pro') || newModel.includes('argon')) {
+        newModel = 'gemini-flash-lite-latest';
+      }
     } else if (newProvider === 'openai') {
       newModel = settings.openaiModel || 'gpt-6-astra';
     }
@@ -439,6 +443,7 @@ export const App: React.FC = () => {
           onSelectView={(v) => {
             setActiveView(v);
             if (v === 'library') setImportModalOpen(true);
+            if (v === 'history') setHistoryModalOpen(true);
           }}
           onOpenSettings={() => setSettingsModalOpen(true)}
         />
@@ -523,7 +528,29 @@ export const App: React.FC = () => {
               message: `Selected "${selected.title}" (${selected.difficulty}). Click "Generate Code" to solve!`
             });
           }}
-          onClose={() => setImportModalOpen(false)}
+          onClose={() => {
+            setImportModalOpen(false);
+            setActiveView('copilot');
+          }}
+        />
+      )}
+
+      {/* Revision History & Branches Modal */}
+      {historyModalOpen && (
+        <HistoryModal
+          onClose={() => {
+            setHistoryModalOpen(false);
+            setActiveView('copilot');
+          }}
+          onRestoreSolution={(restored) => {
+            setSolution(restored);
+            setHistoryModalOpen(false);
+            setActiveView('copilot');
+            setStatus({
+              level: 'success',
+              message: 'Restored solution from history revision!'
+            });
+          }}
         />
       )}
 

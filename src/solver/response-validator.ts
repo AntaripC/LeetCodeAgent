@@ -62,7 +62,13 @@ export class ResponseValidator {
    */
   static sanitizeCode(rawCode: string): string {
     if (!rawCode) return '';
-    let code = rawCode.trim();
+    let code = String(rawCode).trim();
+
+    // If string has escaped newlines like "\\n" instead of actual "\n":
+    if (code.includes('\\n')) {
+      code = code.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n').replace(/\\t/g, '    ');
+    }
+    code = code.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
     // Remove leading ```lang and trailing ```
     if (code.startsWith('```')) {
@@ -112,11 +118,18 @@ export class ResponseValidator {
     if (Array.isArray(rawCode)) {
       rawCode = rawCode.join('\n');
     } else if (rawCode && typeof rawCode === 'object') {
-      const firstVal = Object.values(rawCode)[0];
-      if (Array.isArray(firstVal)) {
-        rawCode = firstVal.join('\n');
-      } else if (typeof firstVal === 'string') {
-        rawCode = firstVal;
+      if (typeof rawCode.code === 'string') {
+        rawCode = rawCode.code;
+      } else if (typeof rawCode.solution === 'string') {
+        rawCode = rawCode.solution;
+      } else if (typeof rawCode.snippet === 'string') {
+        rawCode = rawCode.snippet;
+      } else {
+        const stringVals = Object.values(rawCode).filter((v): v is string => typeof v === 'string');
+        if (stringVals.length > 0) {
+          stringVals.sort((a, b) => b.length - a.length);
+          rawCode = stringVals[0];
+        }
       }
     }
 

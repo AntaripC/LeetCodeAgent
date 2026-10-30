@@ -2,6 +2,14 @@
   "name": "leetcode-ai-copilot",
   "version": "1.0.0",
   "description": "Multi-model AI Copilot for LeetCode browser extension",
+  "homepage": "https://antaripc.github.io/LeetCodeAgent/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AntaripC/LeetCodeAgent.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AntaripC/LeetCodeAgent/issues"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

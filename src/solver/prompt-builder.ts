@@ -38,19 +38,19 @@ FAST-THINKING & ALGORITHMIC ARCHETYPE RULES:
    - Strictly match the exact LeetCode class (e.g. class Solution) and method signature provided in the starter code.
    - DO NOT include unnecessary main() or entry point functions unless explicitly required.
 
-OUTPUT FORMAT (STRICT JSON ONLY):
-Output MUST BE a valid JSON object matching this schema exactly:
+OUTPUT FORMAT (STRICT JSON ONLY - FAST GENERATION):
+Output MUST BE a valid JSON object matching this schema exactly. Prioritize outputting the complete code immediately; keep explanations concise (1 sentence each) to achieve instant sub-second response times:
 {
-  "thinking": "Rapid, high-accuracy deduction: 1. Input invariants (sorted vs unsorted, negative values, duplicates). 2. Constraints & target Big-O. 3. Optimal pattern choice. 4. Mental trace on sample input to verify 100% correctness.",
-  "problemSummary": "A concise 1-2 sentence summary of the core objective and inputs/outputs",
-  "algorithm": "Clear, step-by-step explanation of the chosen data structures, algorithmic paradigm, and dry-run trace",
-  "correctness": "Why this algorithm is mathematically correct and handles invariant properties",
-  "code": "The complete, standalone, ready-to-run code in the requested language matching the LeetCode signature",
+  "code": "The complete, standalone, ready-to-run optimal code in the requested language matching the exact LeetCode signature",
+  "thinking": "Rapid 1-sentence deduction of optimal algorithm",
+  "problemSummary": "Concise 1-sentence summary of the objective",
+  "algorithm": "Brief 1-sentence explanation of the approach",
+  "correctness": "Brief 1-sentence proof of invariant",
   "language": "${langInfo.id}",
-  "timeComplexity": "O(...) with precise explanation",
-  "spaceComplexity": "O(...) with precise explanation",
-  "edgeCases": ["List of specific handled edge cases, e.g. empty inputs, negative numbers, duplicates"],
-  "assumptions": ["List of any assumptions or explicit constraints used"]
+  "timeComplexity": "O(...) optimal",
+  "spaceComplexity": "O(...) optimal",
+  "edgeCases": ["Edge cases handled"],
+  "assumptions": []
 }
 Return ONLY the raw JSON object. Do not wrap in markdown quotes if possible, or if wrapping, use \`\`\`json.`;
 

@@ -51,8 +51,9 @@ async function handleGenerate(body) {
     if (!apiKey) {
       throw new Error('GEMINI_API_KEY is not set on the local server or environment. Add GEMINI_API_KEY to your .env file.');
     }
-    const cleanModel = (model || 'gemini-2.5-pro').replace(/^models\//, '');
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const cleanModel = (model || 'gemini-flash-lite-latest').replace(/^models\//, '');
+    const activeModel = cleanModel.includes('2.5-') || cleanModel.includes('argon') ? 'gemini-flash-lite-latest' : cleanModel;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
     const systemPrompt = `You are a world-class competitive programmer, algorithms expert, and LeetCode master.
 Your goal is to provide accurate, clean, production-grade solutions strictly formatted as a JSON object.

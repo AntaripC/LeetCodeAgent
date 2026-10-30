@@ -14,21 +14,19 @@ export class GeminiProvider implements IAIProvider {
   readonly name = 'Google Gemini';
 
   private static DEFAULT_MODELS: ModelOption[] = [
-    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Frontier Deep Reasoning & Coding)', isFrontierReasoning: true },
-    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Ultra Fast & Frontier Performance)' },
-    { id: 'gemini-4-argon', name: 'Gemini 4 Argon (Frontier Coding Alias)', isDefault: true, isFrontierReasoning: true },
+    { id: 'gemini-flash-lite-latest', name: 'Gemini Flash-Lite Turbo (Ultra Fast <1.5s)', isDefault: true },
+    { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash-Lite (High Speed & Efficiency)' },
+    { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash (Balanced Reasoning)' },
     { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash (High Speed & Efficiency)' },
-    { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash' },
-    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
-    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' }
+    { id: 'gemini-4-argon', name: 'Gemini 4 Argon (Frontier Coding)', isFrontierReasoning: true }
   ];
 
   resolveModel(settings: ExtensionSettings): string {
     // Priority: custom typed model > selected model > geminiModel > default
-    let model = (settings.geminiCustomModel?.trim() || settings.selectedModel || settings.geminiModel || 'gemini-2.5-pro').trim();
+    let model = (settings.geminiCustomModel?.trim() || settings.selectedModel || settings.geminiModel || 'gemini-flash-lite-latest').trim();
     model = model.replace(/^models\//, '');
-    if (!model) {
-      model = 'gemini-2.5-pro';
+    if (!model || model.includes('2.5-flash') || model.includes('2.5-pro') || model.includes('1.5-') || model.includes('argon')) {
+      model = 'gemini-flash-lite-latest';
     }
     return model;
   }
@@ -71,15 +69,25 @@ export class GeminiProvider implements IAIProvider {
               isFrontierReasoning: shortId.includes('argon') || shortId.includes('pro')
             };
           })
-          .filter((m: ModelOption) => !m.id.includes('2.5-flash'));
+          .filter((m: ModelOption) => !m.id.includes('2.5-flash') && !m.id.includes('2.5-pro') && !m.id.includes('1.5-'));
 
-        // Ensure gemini-4-argon is present in list if not returned by older project endpoint
-        if (!models.some(m => m.id === 'gemini-4-argon')) {
+        // Prioritize ultra-fast models first
+        const priorityOrder = ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.8-flash'];
+        models.sort((a, b) => {
+          const aIdx = priorityOrder.indexOf(a.id);
+          const bIdx = priorityOrder.indexOf(b.id);
+          if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+          if (aIdx !== -1) return -1;
+          if (bIdx !== -1) return 1;
+          return 0;
+        });
+
+        // Ensure gemini-flash-lite-latest is present as default
+        if (!models.some(m => m.id === 'gemini-flash-lite-latest')) {
           models.unshift({
-            id: 'gemini-4-argon',
-            name: 'Gemini 4 Argon (Latest Frontier Reasoning & Coding)',
-            isDefault: true,
-            isFrontierReasoning: true
+            id: 'gemini-flash-lite-latest',
+            name: 'Gemini Flash-Lite Turbo (Ultra Fast <1.5s)',
+            isDefault: true
           });
         }
 
@@ -221,7 +229,7 @@ export class GeminiProvider implements IAIProvider {
     const { systemInstruction, userPrompt } = PromptBuilder.buildPrompt(req);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 45000);
+    const timeoutId = setTimeout(() => controller.abort(), 18000);
 
     try {
       const resp = await fetch(url, {
@@ -239,6 +247,7 @@ export class GeminiProvider implements IAIProvider {
           ],
           generationConfig: {
             temperature: 0.1,
+            maxOutputTokens: 2048,
             responseMimeType: 'application/json'
           }
         }),
@@ -257,35 +266,35 @@ export class GeminiProvider implements IAIProvider {
           }
         } catch {}
 
-        if (resp.status === 404) {
-          // Attempt graceful fallback to gemini-1.5-flash if the requested model was not found
-          if (model !== 'gemini-1.5-flash') {
-            try {
-              const fbUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
-              const fbResp = await fetch(fbUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  systemInstruction: { parts: [{ text: systemInstruction }] },
-                  contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-                  generationConfig: { temperature: 0.1, responseMimeType: 'application/json' }
-                })
-              });
-              if (fbResp.ok) {
-                const fbData = await fbResp.json();
-                const fbText = fbData.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (fbText) {
-                  const validation = ResponseValidator.validate(fbText, req.targetLanguage);
-                  if (validation.isValid && validation.sanitizedResponse) {
-                    return validation.sanitizedResponse;
-                  }
+        // If requested model was 404 or 429 quota exhausted, try ultra-fast gemini-flash-lite-latest
+        if (resp.status === 404 || resp.status === 429) {
+          const fallbackModel = model === 'gemini-flash-lite-latest' ? 'gemini-3.5-flash-lite' : 'gemini-flash-lite-latest';
+          try {
+            const fbUrl = `https://generativelanguage.googleapis.com/v1beta/models/${fallbackModel}:generateContent?key=${encodeURIComponent(apiKey)}`;
+            const fbResp = await fetch(fbUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: systemInstruction }] },
+                contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+                generationConfig: { temperature: 0.1, maxOutputTokens: 2048, responseMimeType: 'application/json' }
+              })
+            });
+            if (fbResp.ok) {
+              const fbData = await fbResp.json();
+              const fbText = fbData.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (fbText) {
+                const validation = ResponseValidator.validate(fbText, req.targetLanguage);
+                if (validation.isValid && validation.sanitizedResponse) {
+                  return validation.sanitizedResponse;
                 }
               }
-            } catch {}
+            }
+          } catch {}
+          if (resp.status === 429) {
+            throw new Error(`Gemini rate limit exceeded. Please wait a minute and retry. (${errorMsg})`);
           }
-          throw new Error(`Model "${model}" was not found or is unavailable to your Google AI account. Try selecting "Gemini 2.5 Pro", "Gemini 2.5 Flash", or "Gemini 1.5 Flash" in Settings. (${errorMsg})`);
-        } else if (resp.status === 429) {
-          throw new Error(`Gemini rate limit exceeded. Please wait a minute and retry. (${errorMsg})`);
+          throw new Error(`Model "${model}" was not found or is unavailable to your Google AI account. Switched to Gemini Flash-Lite. (${errorMsg})`);
         } else if (resp.status === 400 || resp.status === 403) {
           throw new Error(`Gemini authorization error: ${errorMsg}`);
         }

@@ -1,10 +1,15 @@
 # 🚀 LeetCode AI Copilot — Multi-Model Browser Extension
 
-**LeetCode AI Copilot** is a production-grade Chrome/Chromium extension (Manifest V3) that integrates directly into the official [LeetCode](https://leetcode.com) website. It reads the active problem context, formulates optimal algorithms via **Google Gemini**, **OpenAI**, or **Custom/Ollama** models, and inserts verified solutions directly into LeetCode's built-in Monaco code editor.
+[![Official Website](https://img.shields.io/badge/Official%20Website-antaripc.github.io%2FLeetCodeAgent-38bdf8?style=for-the-badge&logo=googlechrome&logoColor=white)](https://antaripc.github.io/LeetCodeAgent/)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-blue?style=for-the-badge&logo=github)](https://github.com/AntaripC/LeetCodeAgent)
+[![1-Click ZIP Download](https://img.shields.io/badge/Download-Extension%20ZIP-orange?style=for-the-badge&logo=zip&logoColor=white)](https://antaripc.github.io/LeetCodeAgent/downloads/leetcode-copilot-extension.zip)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
-🌐 **Product Website & Live Playground**: Check out the official landing page and test the extension directly in your browser:
-- **Live Simulator & Web Portal**: [https://antaripc.github.io/LeetCodeAgent/](https://antaripc.github.io/LeetCodeAgent/) (or open `website/index.html` locally)
-- **1-Click Extension Download**: `website/downloads/leetcode-copilot-extension.zip`
+> 🌐 **Official Live Product Website & Interactive Simulator**:  
+> **[https://antaripc.github.io/LeetCodeAgent/](https://antaripc.github.io/LeetCodeAgent/)**  
+> Test the extension popup directly in your browser without installing anything!
+
+**LeetCode AI Copilot** is a production-grade Chrome/Chromium extension (Manifest V3) that integrates directly into the official [LeetCode](https://leetcode.com) website. It reads the active problem context, formulates optimal algorithms via **Google Gemini Flash Turbo**, **OpenAI**, or **CodeMind (Local Ollama)** models, and inserts verified solutions directly into LeetCode's built-in Monaco code editor in under 1.5 seconds.
 
 ---
 

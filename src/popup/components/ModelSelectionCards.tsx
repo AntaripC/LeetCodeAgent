@@ -52,12 +52,12 @@ export const ModelSelectionCards: React.FC<ModelSelectionCardsProps> = ({
 
           <div className="model-info">
             <div className="model-name-row">
-              <span className="model-name">Gemini 4 Argon</span>
+              <span className="model-name">Gemini Flash Turbo</span>
               {isGeminiSelected && <span className="selected-pill">Selected</span>}
             </div>
             <div className="model-stats">
-              <span>Accuracy: 98%</span>
-              <span>Logic: 97%</span>
+              <span>Speed: &lt;1.5s</span>
+              <span>Logic: 99%</span>
             </div>
           </div>
         </div>

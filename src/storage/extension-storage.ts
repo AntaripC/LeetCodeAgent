@@ -6,9 +6,14 @@ import {
   ProviderConnectionStatus
 } from '../types';
 
+const ENV_GEMINI_KEY =
+  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GEMINI_API_KEY) ||
+  (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) ||
+  '';
+
 export const DEFAULT_SETTINGS: ExtensionSettings = {
   selectedProvider: 'gemini',
-  selectedModel: 'gemini-4-argon',
+  selectedModel: 'gemini-flash-lite-latest',
   targetLanguage: 'python3',
   useEditorLanguage: true,
   confirmBeforeOverwrite: true,
@@ -38,8 +43,8 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   codemindMaxTokens: 4096,
   codemindTemperature: 0.2,
 
-  geminiApiKey: '',
-  geminiModel: 'gemini-4-argon',
+  geminiApiKey: ENV_GEMINI_KEY,
+  geminiModel: 'gemini-flash-lite-latest',
   geminiCustomModel: '',
 
   openaiApiKey: '',
@@ -76,12 +81,25 @@ export class ExtensionStorage {
             ...(stored || {})
           };
 
-          // Auto-migrate legacy 2.5 flash to gemini-4-argon / gemini-3.8-flash
-          if (merged.selectedModel?.includes('2.5-flash')) {
-            merged.selectedModel = 'gemini-4-argon';
+          // Auto-migrate legacy 404/429 models to ultra-fast gemini-flash-lite-latest
+          if (
+            !merged.selectedModel ||
+            merged.selectedModel.includes('2.5-flash') ||
+            merged.selectedModel.includes('2.5-pro') ||
+            merged.selectedModel.includes('argon')
+          ) {
+            merged.selectedModel = 'gemini-flash-lite-latest';
           }
-          if (merged.geminiModel?.includes('2.5-flash')) {
-            merged.geminiModel = 'gemini-4-argon';
+          if (
+            !merged.geminiModel ||
+            merged.geminiModel.includes('2.5-flash') ||
+            merged.geminiModel.includes('2.5-pro') ||
+            merged.geminiModel.includes('argon')
+          ) {
+            merged.geminiModel = 'gemini-flash-lite-latest';
+          }
+          if (!merged.geminiApiKey || merged.geminiApiKey.trim().length === 0) {
+            merged.geminiApiKey = DEFAULT_SETTINGS.geminiApiKey;
           }
           resolve(merged);
         });
@@ -93,11 +111,24 @@ export class ExtensionStorage {
       const stored = localStorage.getItem(SETTINGS_KEY);
       if (stored) {
         const merged: ExtensionSettings = { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
-        if (merged.selectedModel?.includes('2.5-flash')) {
-          merged.selectedModel = 'gemini-4-argon';
+        if (
+          !merged.selectedModel ||
+          merged.selectedModel.includes('2.5-flash') ||
+          merged.selectedModel.includes('2.5-pro') ||
+          merged.selectedModel.includes('argon')
+        ) {
+          merged.selectedModel = 'gemini-flash-lite-latest';
         }
-        if (merged.geminiModel?.includes('2.5-flash')) {
-          merged.geminiModel = 'gemini-4-argon';
+        if (
+          !merged.geminiModel ||
+          merged.geminiModel.includes('2.5-flash') ||
+          merged.geminiModel.includes('2.5-pro') ||
+          merged.geminiModel.includes('argon')
+        ) {
+          merged.geminiModel = 'gemini-flash-lite-latest';
+        }
+        if (!merged.geminiApiKey || merged.geminiApiKey.trim().length === 0) {
+          merged.geminiApiKey = DEFAULT_SETTINGS.geminiApiKey;
         }
         return merged;
       }
