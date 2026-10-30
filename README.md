@@ -14,19 +14,30 @@
 ---
 
 ## 📑 Table of Contents
-1. [Key Features](#-key-features)
-2. [Prerequisites: Installing Node.js](#1-prerequisites-installing-nodejs)
-3. [Installation of Project Dependencies](#2-install-project-dependencies)
-4. [Building the Extension](#3-build-the-extension)
-5. [Loading the Unpacked Extension into Chrome](#4-load-the-unpacked-extension-into-chrome)
-6. [CodeMind AI: Local & Custom Models (Ollama on M2 Mac)](#5-codemind-ai-local--custom-models-ollama-on-m2-mac)
-7. [Configuring Cloud AI Providers (Gemini & OpenAI)](#6-configuring-cloud-ai-providers-gemini--openai)
-8. [How to Use on LeetCode](#7-how-to-use-on-leetcode)
-9. [Inserting Code into the Editor](#8-inserting-code-into-the-editor)
-10. [Supported Programming Languages](#9-supported-programming-languages)
-11. [Troubleshooting & Diagnostics](#10-troubleshooting--diagnostics)
-12. [Adding a New AI Provider](#11-how-to-add-another-ai-provider)
-13. [Running Automated Tests](#12-running-automated-tests)
+1. [About & Official Web Links](#ℹ️-about--official-web-links)
+2. [Key Features](#-key-features)
+3. [Prerequisites: Installing Node.js](#1-prerequisites-installing-nodejs)
+4. [Installation of Project Dependencies](#2-install-project-dependencies)
+5. [Building the Extension](#3-build-the-extension)
+6. [Loading the Unpacked Extension into Chrome](#4-load-the-unpacked-extension-into-chrome)
+7. [CodeMind AI: Local & Custom Models (Ollama on M2 Mac)](#5-codemind-ai-local--custom-models-ollama-on-m2-mac)
+8. [Configuring Cloud AI Providers (Gemini & OpenAI)](#6-configuring-cloud-ai-providers-gemini--openai)
+9. [How to Use on LeetCode](#7-how-to-use-on-leetcode)
+10. [Inserting Code into the Editor](#8-inserting-code-into-the-editor)
+11. [Supported Programming Languages](#9-supported-programming-languages)
+12. [Troubleshooting & Diagnostics](#10-troubleshooting--diagnostics)
+13. [Adding a New AI Provider](#11-how-to-add-another-ai-provider)
+14. [Running Automated Tests](#12-running-automated-tests)
+
+---
+
+## ℹ️ About & Official Web Links
+
+- 🌐 **Official Web Portal & Interactive Simulator**: [https://antaripc.github.io/LeetCodeAgent/](https://antaripc.github.io/LeetCodeAgent/)
+- 💻 **GitHub Repository**: [https://github.com/AntaripC/LeetCodeAgent](https://github.com/AntaripC/LeetCodeAgent)
+- 📦 **1-Click Prebuilt Package**: [leetcode-copilot-extension.zip](https://antaripc.github.io/LeetCodeAgent/downloads/leetcode-copilot-extension.zip)
+- 📚 **Online Documentation & Setup**: [Installation & Usage Guide](https://antaripc.github.io/LeetCodeAgent/#install)
+- ⚖️ **License**: Open-source under [MIT License](LICENSE)
 
 ---
 

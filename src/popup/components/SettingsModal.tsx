@@ -14,7 +14,10 @@ import {
   Lock,
   Zap,
   CheckCircle2,
-  Sparkles
+  Sparkles,
+  Info,
+  Globe,
+  ExternalLink
 } from 'lucide-react';
 import { ExtensionSettings, AIProviderType, ProviderConnectionTestResult } from '../../types';
 import { DEFAULT_SETTINGS } from '../../storage/extension-storage';
@@ -33,7 +36,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onTestConnection
 }) => {
   const [formData, setFormData] = useState<ExtensionSettings>({ ...settings });
-  const [activeTab, setActiveTab] = useState<'profile' | 'editor' | 'safeguards' | 'activity'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'editor' | 'safeguards' | 'activity' | 'about'>('profile');
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<ProviderConnectionTestResult | null>(null);
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -147,6 +150,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             >
               <Clock size={12} style={{ marginRight: '4px', display: 'inline' }} />
               Activity
+            </button>
+            <button
+              className={`tab-btn ${activeTab === 'about' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('about'); setTestResult(null); }}
+              title="About LeetCode Copilot & Web Portal"
+            >
+              <Info size={12} style={{ marginRight: '4px', display: 'inline' }} />
+              About
             </button>
           </div>
 
@@ -422,6 +433,113 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <Activity size={13} className={testing ? 'spinner' : ''} />
                   {testing ? 'Testing Engine Connectivity...' : 'Run Engine Health Check'}
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: About Section */}
+          {activeTab === 'about' && (
+            <div className="pref-section">
+              <div style={{ textAlign: 'center', padding: '6px 0 12px' }}>
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    padding: '8px',
+                    background: 'rgba(56, 189, 248, 0.12)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    marginBottom: '8px'
+                  }}
+                >
+                  <Globe size={24} color="#38bdf8" />
+                </div>
+                <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#f8fafc', margin: '0 0 2px' }}>
+                  LeetCode AI Copilot
+                </h3>
+                <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>
+                  v1.2.0 · Manifest V3 Production Edition
+                </p>
+              </div>
+
+              <div
+                style={{
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '10px',
+                  padding: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px'
+                }}
+              >
+                <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: '1.45' }}>
+                  Frontier multi-model algorithmic pair programmer with sub-2s code generation, Monaco Editor automation, and local offline privacy.
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+                  <a
+                    href="https://antaripc.github.io/LeetCodeAgent/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-primary"
+                    style={{
+                      textDecoration: 'none',
+                      justifyContent: 'center',
+                      fontSize: '11px',
+                      padding: '7px 10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <Globe size={13} />
+                    <span>Official Web Portal &amp; Simulator</span>
+                    <ExternalLink size={11} />
+                  </a>
+
+                  <a
+                    href="https://github.com/AntaripC/LeetCodeAgent"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary"
+                    style={{
+                      textDecoration: 'none',
+                      justifyContent: 'center',
+                      fontSize: '11px',
+                      padding: '7px 10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span>GitHub Repository &amp; Source</span>
+                    <ExternalLink size={11} />
+                  </a>
+
+                  <a
+                    href="https://antaripc.github.io/LeetCodeAgent/downloads/leetcode-copilot-extension.zip"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary"
+                    style={{
+                      textDecoration: 'none',
+                      justifyContent: 'center',
+                      fontSize: '11px',
+                      padding: '7px 10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <Download size={13} />
+                    <span>Download Pre-built ZIP Archive</span>
+                    <ExternalLink size={11} />
+                  </a>
+                </div>
+              </div>
+
+              <div style={{ fontSize: '10px', color: '#64748b', textAlign: 'center', marginTop: '8px' }}>
+                Open-source under MIT License · Designed for Chrome &amp; Chromium
               </div>
             </div>
           )}
